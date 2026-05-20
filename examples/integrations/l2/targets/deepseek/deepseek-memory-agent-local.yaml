@@ -1,0 +1,15 @@
+name: local-memory-agent
+target_type: memory_agent
+memory_agent:
+  endpoint_url: http://127.0.0.1:8765/malleus/memory-agent
+  namespace: malleus-eval
+  user_id: synthetic-user
+  request:
+    timeout: 30
+    max_tokens: 512
+metadata:
+  lab_environment: true
+  controlled_lab: true
+  controlled_surface: controlled_memory
+  backed_by: deepseek-v4-flash
+  harness_proxy: local_deepseek_system_harness

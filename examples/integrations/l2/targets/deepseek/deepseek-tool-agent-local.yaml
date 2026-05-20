@@ -1,0 +1,21 @@
+name: deepseek-tool-agent-local
+target_type: tool_agent
+tool_agent:
+  endpoint_url: http://127.0.0.1:8765/tool-agent
+  auth: {}
+  allowed_tools:
+    - search
+    - classify_ticket
+    - read_policy
+    - no_tool_available
+  policy_ref: malleus-local-read-only
+  request:
+    temperature: 0.0
+    timeout: 120
+    max_tokens: 256
+metadata:
+  lab_environment: true
+  controlled_lab: true
+  controlled_surface: controlled_tool_agent
+  backed_by: deepseek-v4-flash
+  harness_proxy: local_deepseek_system_harness

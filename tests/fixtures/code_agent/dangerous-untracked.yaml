@@ -1,0 +1,11 @@
+schema_version: malleus.code_agent_trace.v1
+trace_id: dangerous-untracked
+provider_calls_enabled: false
+gates: {planning: true, review: true, tests: true, approval: true}
+tests: ["pytest tests/test_safe.py -q"]
+approvals: ["security-review"]
+untracked_files:
+  - ".env.local"
+actions:
+  - action_id: status-check
+    type: status

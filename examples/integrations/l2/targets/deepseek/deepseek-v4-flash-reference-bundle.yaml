@@ -1,0 +1,31 @@
+schema_version: malleus.target_bundle.v1
+name: deepseek-v4-flash-reference
+model_target: deepseek-v4-flash-official
+mode: reference_local
+surfaces:
+  rag:
+    target: examples/integrations/l2/targets/deepseek/deepseek-rag-service-local.yaml
+    required_target_type: rag_service
+  tool_agent:
+    target: examples/integrations/l2/targets/deepseek/deepseek-tool-agent-local.yaml
+    required_target_type: tool_agent
+  workflow:
+    target: examples/integrations/l2/targets/deepseek/deepseek-workflow-harness-local.yaml
+    required_target_type: workflow_harness
+  memory:
+    target: examples/integrations/l2/targets/deepseek/deepseek-memory-agent-local.yaml
+    required_target_type: memory_agent
+  multi_agent:
+    target: examples/integrations/l2/targets/deepseek/deepseek-multi-agent-local.yaml
+    required_target_type: multi_agent
+  browser:
+    target: examples/integrations/l2/targets/deepseek/deepseek-browser-agent-local.yaml
+    required_target_type: browser_agent
+  code_agent:
+    target: examples/integrations/l2/targets/deepseek/deepseek-code-agent-local.yaml
+    required_target_type: code_agent
+metadata:
+  generated_by: malleus
+  backing_provider: deepseek
+  backing_model: deepseek-v4-flash
+  purpose: Reference bundle for full trace-backed local L2 coverage.

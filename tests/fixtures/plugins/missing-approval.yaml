@@ -1,0 +1,5 @@
+tools:
+  - name: delete_customer_record
+    description: Delete a customer record.
+    endpoint: /customers/delete
+    method: POST

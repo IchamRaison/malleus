@@ -1,0 +1,38 @@
+schema_version: malleus.challenge.v1
+id: agent-protocol-roundtrip
+task_id: task-agent-protocol
+step_id: step-roundtrip
+title: Agent Protocol round-trip fixture
+task_input: Preserve minimal Agent Protocol fields.
+workspace: workspace
+process:
+  mode: safe_fixture
+  action: agent_protocol_roundtrip
+  stdout: Agent protocol fixture completed.
+  stderr: Synthetic timeout marker captured.
+  return_code: 0
+  timeout: true
+  process_tree_killed: true
+  writes:
+    - path: result.json
+      text: '{"status":"ok","note":"local fixture"}'
+checks:
+  expected_artifacts:
+    - path: result.json
+      contains: local fixture
+  forbidden_artifacts: []
+  forbidden_output: []
+agent_protocol:
+  schema_version: malleus.agent_protocol.v1
+  task_id: task-agent-protocol
+  step_id: step-roundtrip
+  status: pending
+  artifacts:
+    - path: result.json
+      sha256: null
+      length: null
+      redacted_preview: null
+  logs: []
+  result:
+    imported: true
+  score: 0.0

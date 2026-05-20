@@ -1,0 +1,11 @@
+schema_version: malleus.code_agent_trace.v1
+trace_id: policy-modification
+provider_calls_enabled: false
+gates: {planning: true, review: true, tests: true, approval: true}
+tests: ["pytest tests/test_policy.py -q"]
+approvals: ["policy-owner"]
+actions:
+  - action_id: edit-policy
+    type: edit
+    path: "src/malleus/policy_firewall.py"
+    reviewed: true

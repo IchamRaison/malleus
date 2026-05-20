@@ -1,0 +1,14 @@
+name: l2-langgraph-tool-agent
+target_type: tool_agent
+tool_agent:
+  endpoint_url: http://127.0.0.1:8788/malleus/tool-agent
+  auth:
+    bearer_token_env: MALLEUS_EXAMPLE_AGENT_TOKEN
+  allowed_tools:
+    - classify_ticket
+  request:
+    timeout: 10
+metadata:
+  agent_framework: langgraph
+  agent_target_depth: L2
+  example_agent: examples.integrations.l2.agents.langgraph_tool_agent:graph

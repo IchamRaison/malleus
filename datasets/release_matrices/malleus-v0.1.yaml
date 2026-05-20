@@ -1,0 +1,243 @@
+schema_version: malleus.release_matrix.v1
+id: malleus-v0.1
+version: 0.1.0
+mode_boundaries:
+  - mode: dry_run
+    evidence_level: scaffold_only
+    provider_calls_enabled: false
+    notes: Classic benchmark dry-run writes plans only and does not call providers.
+  - mode: local_fixture
+    evidence_level: scaffold_only
+    provider_calls_enabled: false
+    notes: Local fixture evidence is provider-free and static.
+  - mode: simulated
+    evidence_level: provider_free_simulated
+    provider_calls_enabled: false
+    notes: Simulated evidence is local and cannot be treated as live model behavior.
+  - mode: scaffold
+    evidence_level: scaffold_only
+    provider_calls_enabled: false
+    notes: Scaffold evidence records plans, gaps, and unsupported paths only.
+  - mode: live_provider
+    evidence_level: live_model_required
+    provider_calls_enabled: true
+    notes: Live provider evidence requires explicit operator intent, compatible target config, credentials, and either completed chat/multimodal model responses or real system target calls with observable traces.
+packs:
+  - id: smoke-v1
+    surface_name: Smoke benchmark
+    path: datasets/benchmark_packs/smoke-v1.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [chat_completion]
+    live_evidence_category: chat_model_evidence
+    real_system_evidence: false
+    notes: Minimal smoke benchmark pack; dry-run output is static plan evidence, but release behavior findings require live model responses.
+  - id: core-v1
+    surface_name: Core text security benchmark
+    path: datasets/benchmark_packs/core-v1.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [chat_completion]
+    live_evidence_category: chat_model_evidence
+    real_system_evidence: false
+    notes: Core benchmark pack; provider-free runs can validate wiring, while model behavior evidence requires explicit live execution.
+  - id: rag-v1
+    surface_name: RAG retrieval and citation security
+    path: tests/fixtures/rag/security-fixture.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [rag_service]
+    live_evidence_category: live_system_evidence
+    real_system_evidence: true
+    static_evidence_separate: Local fixture/model-only RAG checks are separate provider-free evidence and do not satisfy real rag_service target trace evidence.
+    notes: Real RAG service surface; release system evidence requires a compatible rag_service target, target calls, and observable retrieval/citation traces rather than model-only fixture responses.
+  - id: agentic-injection-v1
+    surface_name: Tool-agent injection and authorization security
+    path: datasets/agentic/agentic_injection_v1.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [tool_agent]
+    live_evidence_category: live_system_evidence
+    real_system_evidence: true
+    static_evidence_separate: Mock agent-lab tool scenarios are separate synthetic evidence and do not satisfy real tool_agent target trace evidence.
+    notes: Real tool-agent surface; release system evidence requires a compatible tool_agent target, target calls, and observable tool-call traces.
+  - id: artifact-hidden-channel-v1
+    surface_name: Hidden-channel and artifact-injection security
+    path: tests/fixtures/hidden_channels/artifact-hidden-catalog.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [chat_completion]
+    live_evidence_category: chat_model_evidence
+    real_system_evidence: false
+    notes: Hidden-channel and artifact prompt surface; release behavior evidence requires completed live chat_completion model responses rather than local artifact inspection alone.
+  - id: visual-ocr-matrix
+    surface_name: Visual and OCR prompt-injection security
+    path: src/malleus/visual_lab.py
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [vision_model]
+    live_evidence_category: multimodal_model_evidence
+    real_system_evidence: false
+    notes: Visual/OCR matrix requires completed live multimodal/vision model evidence with image input support; targets without image preflight support report provider_capability_gap rather than satisfying this row with text-only chat.
+  - id: code-agent-v1
+    surface_name: Code-agent sandbox and workspace security
+    path: tests/fixtures/code_agent
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [code_agent]
+    live_evidence_category: live_system_evidence
+    real_system_evidence: true
+    static_evidence_separate: Static code-agent trace inspection is separate provider-free evidence and does not satisfy real code_agent sandbox trace evidence.
+    notes: Real code-agent harness surface for live wrappers; release system evidence requires a compatible code_agent target, sandboxed execution, and observable workspace traces. Local static trace review remains separate provider-free evidence.
+  - id: plugin-workflow-v1
+    surface_name: Plugin workflow approval and action security
+    path: tests/fixtures/workflows/plugin-workflow-v1.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [workflow_harness]
+    live_evidence_category: live_system_evidence
+    real_system_evidence: true
+    static_evidence_separate: Static plugin manifest scanning is separate provider-free evidence and does not satisfy real workflow_harness target trace evidence.
+    notes: Real workflow harness surface for live wrappers; release system evidence requires a compatible workflow_harness target, target calls, and observable dry-run workflow traces. Static plugin scanning remains separate provider-free evidence.
+  - id: memory-agent-v1
+    surface_name: Memory poisoning and cross-user leakage
+    path: tests/fixtures/memory/memory-agent-v1.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [memory_agent]
+    live_evidence_category: live_system_evidence
+    real_system_evidence: true
+    notes: Real memory-agent surface; release system evidence requires a compatible memory_agent target, target calls, and observable memory read/write traces.
+  - id: multi-agent-v1
+    surface_name: Multi-agent handoff and delegation security
+    path: tests/fixtures/multi_agent/multi-agent-v1.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [multi_agent]
+    live_evidence_category: live_system_evidence
+    real_system_evidence: true
+    notes: Real multi-agent surface; release system evidence requires a compatible multi_agent target, target calls, and observable handoff/delegation traces.
+  - id: ui-browser-v1
+    surface_name: Browser and UI action security
+    path: tests/fixtures/ui_harness/local-product.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [browser_agent]
+    live_evidence_category: live_system_evidence
+    real_system_evidence: true
+    notes: Real browser/UI agent surface; release system evidence requires a compatible browser_agent target, a local/staging UI DOM fetch, target calls, and observable action traces. Screenshot capture is tracked as an explicit capability gap until a Playwright backend is configured.
+  - id: campaign-v1
+    surface_name: Multi-step adversarial campaign security
+    path: tests/fixtures/campaigns/agentic-extreme.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [chat_completion]
+    live_evidence_category: chat_model_evidence
+    real_system_evidence: false
+    notes: Campaign runner prompt surface; canonical release behavior evidence requires completed live chat_completion model responses, not dry-run plans.
+  - id: self-modification-v1
+    surface_name: Self-modification and policy-tampering security
+    path: tests/fixtures/self_modification
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [tool_agent, workflow_harness, code_agent, memory_agent, multi_agent]
+    live_evidence_category: live_system_evidence
+    real_system_evidence: true
+    static_evidence_separate: Static self-modification proposal review is separate provider-free evidence and does not satisfy compatible tool_agent, workflow_harness, code_agent, memory_agent, or multi_agent target trace evidence.
+    notes: Self-modification live execution routes only through compatible tool_agent, workflow_harness, code_agent, memory_agent, or multi_agent targets; incompatible targets report an explicit target capability gap, and chat text/local policy checks do not satisfy real system evidence.
+  - id: challenge-v1
+    surface_name: Deterministic agent safety challenges
+    path: tests/fixtures/challenges
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [chat_completion]
+    live_evidence_category: chat_model_evidence
+    real_system_evidence: false
+    notes: Deterministic challenge runner surface; release behavior evidence requires planned live-backed chat_completion execution with completed model responses.
+  - id: calibration-v1
+    surface_name: Calibration and control behavior checks
+    path: datasets/calibration/calibration-v1.yaml
+    evidence_level: live_model_required
+    status: available
+    live_model_evidence: true
+    scaffold_only: false
+    target_types: [chat_completion]
+    live_evidence_category: chat_model_evidence
+    real_system_evidence: false
+    notes: Deterministic calibration model/control surface; release behavior evidence requires planned live-backed chat_completion execution with completed model and control responses.
+selected_mutation_profiles:
+  - id: selected-v1
+    profile_name: Selected mutation robustness profile
+    path: datasets/mutation_profiles/selected-v1.yaml
+    status: available
+    default: true
+    mutation_count: 25
+    evidence_level: live_model_required
+    target_types: [chat_completion]
+    live_evidence_category: chat_model_evidence
+    real_system_evidence: false
+    notes: Canonical selected mutation profile; mutation behavior evidence requires explicit live model execution.
+deep_mutation_profiles:
+  - id: deep-v1
+    profile_name: Deep mutation robustness profile
+    path: datasets/mutation_profiles/deep-v1.yaml
+    status: available_optional
+    default: false
+    optional: true
+    evidence_level: optional_deep_test
+    notes: Optional deep mutation profile for expanded testing; not part of default release evidence.
+gates:
+  - id: live-model-release
+    description: Live model release evidence requires explicit live-provider execution over canonical packs.
+    pack_ids:
+      - smoke-v1
+      - core-v1
+      - rag-v1
+      - agentic-injection-v1
+      - artifact-hidden-channel-v1
+      - visual-ocr-matrix
+      - code-agent-v1
+      - plugin-workflow-v1
+      - memory-agent-v1
+      - multi-agent-v1
+      - ui-browser-v1
+      - campaign-v1
+      - self-modification-v1
+      - challenge-v1
+      - calibration-v1
+    mutation_profile_refs:
+      - selected-v1
+    evidence_level: live_model_required
+    notes: Chat model evidence is separate from real system trace evidence and provider-free/static/scaffold evidence. The deep-v1 mutation profile is available for optional exhaustive testing, not default release gating.
+notes:
+  - Provider-free, static, simulated, scaffold, and planning evidence can prove wiring and release readiness checks but cannot prove model behavior.
+  - Live chat model evidence requires completed model responses from explicit provider execution; live system evidence requires compatible target types plus observable target calls/traces and must not be inferred from scaffold-only surfaces or mutation profile references alone.
+  - The matrix records 15 live pack/surface references plus 2 mutation profile references; mutation profiles remain separate from packs.

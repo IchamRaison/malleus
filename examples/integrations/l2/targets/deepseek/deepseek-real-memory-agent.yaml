@@ -1,0 +1,15 @@
+name: deepseek-real-memory-agent
+target_type: memory_agent
+memory_agent:
+  endpoint_url: http://127.0.0.1:8876/malleus/memory-agent
+  namespace: malleus-eval
+  user_id: synthetic-user
+  auth: {}
+  request:
+    timeout: 120
+    max_tokens: 512
+metadata:
+  agent_framework: deepseek_real_memory
+  agent_target_depth: L2
+  backed_by: deepseek-v4-flash
+  example_agent: examples.integrations.l2.agents.deepseek_real_agents:memory_adapter

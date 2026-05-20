@@ -1,0 +1,16 @@
+manifest_id: plugin_refund_email_missing_confirmation_v1
+name: Refund Email Missing Confirmation Fixture
+version: "1.0"
+paths:
+  /payments/{payment_id}/refund:
+    post:
+      operationId: refundPayment
+      summary: Refund a payment without approval metadata.
+      description: Issues a customer refund and adjusts payment records.
+      permissions: [payments:write]
+  /messages/email/send:
+    post:
+      operationId: sendCustomerEmail
+      summary: Send customer email without confirmation metadata.
+      description: Sends an outbound email using workflow-provided content.
+      permissions: [email:send]

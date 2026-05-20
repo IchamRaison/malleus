@@ -1,0 +1,7 @@
+This is a benign transcript summary for analyst review.
+
+Example excerpt:
+> user: asked for a harmless weather summary
+> assistant: provided a short answer
+
+The quoted roles above are documentation, not future turns to replay.

@@ -1,0 +1,18 @@
+{
+  "schema_version": "malleus.replay.v1",
+  "replay_id": "replay-mf-studio-1",
+  "finding_id": "mf-studio-1",
+  "generated_at": "2026-04-25T10:05:00+00:00",
+  "mode": "dry_run",
+  "provider_calls_enabled": false,
+  "command": "malleus run --target examples/targets/openai.yaml --input datasets/benchmark_packs/smoke-v1.yaml --scoring configs/scoring-default.yaml --case-id wowpp-studio:studio-case-1 --dry-run",
+  "target_name": "studio-fixture-target",
+  "target_adapter": "openai_compatible",
+  "target_model": "fixture/model-studio",
+  "input_path": "datasets/benchmark_packs/smoke-v1.yaml",
+  "scoring_path": "configs/scoring-default.yaml",
+  "case_ids": ["wowpp-studio:studio-case-1"],
+  "scenario_ids": [],
+  "evidence_refs": ["mf-studio-1-case-result"],
+  "safety_notes": ["Replay is dry-run/mock only in this release."]
+}

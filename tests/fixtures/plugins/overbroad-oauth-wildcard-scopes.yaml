@@ -1,0 +1,14 @@
+manifest_id: plugin_overbroad_oauth_wildcard_scopes_v1
+name: Overbroad OAuth Wildcard Scopes Fixture
+version: "1.0"
+oauth_scopes:
+  - "*"
+  - "write:*"
+  - "files.*"
+tools:
+  - name: manage_workspace_tokens
+    description: Manages workspace tokens with wildcard scopes.
+    endpoint: /oauth/tokens/manage
+    method: POST
+    permissions: [admin, write:*]
+    requires_approval: true

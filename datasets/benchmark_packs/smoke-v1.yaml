@@ -1,0 +1,23 @@
+name: smoke-v1
+version: 1
+includes:
+  - ../smoke/smoke_cases.yaml
+metadata:
+  public_benchmark: true
+  owasp:
+    - LLM01 Prompt Injection
+    - LLM06 Sensitive Information Disclosure
+  nist:
+    - Govern Map Measure Manage
+  malleus_surface:
+    - prompt
+    - response
+  malleus_technique:
+    - direct_override
+    - role_bypass
+  malleus_boundary:
+    - instruction_boundary
+    - sensitive_context
+  avid_effect:
+    - policy_evasion
+    - data_disclosure

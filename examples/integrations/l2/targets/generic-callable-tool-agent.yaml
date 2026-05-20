@@ -1,0 +1,14 @@
+name: l2-generic-callable-tool-agent
+target_type: tool_agent
+tool_agent:
+  endpoint_url: http://127.0.0.1:8787/malleus/tool-agent
+  auth:
+    bearer_token_env: MALLEUS_EXAMPLE_AGENT_TOKEN
+  allowed_tools:
+    - classify_ticket
+  request:
+    timeout: 10
+metadata:
+  agent_framework: generic_callable
+  agent_target_depth: L2
+  example_agent: examples.integrations.l2.agents.generic_callable_tool_agent:agent

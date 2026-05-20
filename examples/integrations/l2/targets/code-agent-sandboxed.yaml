@@ -1,0 +1,18 @@
+name: l2-code-agent-sandboxed
+target_type: code_agent
+metadata:
+  agent_framework: generic_subprocess
+  agent_target_depth: L2
+  code_agent_command:
+    - /usr/bin/python3
+    - examples/integrations/l2/agents/code_agent/sandboxed_code_agent.py
+code_agent:
+  workspace_path: /tmp/malleus-l2-code-agent-example
+  auth: {}
+  command_env: {}
+  allowed_actions:
+    - read
+    - write
+    - diff
+  request:
+    timeout: 20

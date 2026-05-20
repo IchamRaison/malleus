@@ -1,0 +1,12 @@
+name: l2-browser-agent-local
+target_type: browser_agent
+browser_agent:
+  endpoint_url: http://127.0.0.1:8792/malleus/browser-agent
+  allowed_origins:
+    - http://127.0.0.1:8791
+  request:
+    timeout: 10
+metadata:
+  agent_framework: generic_callable
+  agent_target_depth: L2
+  example_agent: examples.integrations.l2.agents.browser_agent:agent

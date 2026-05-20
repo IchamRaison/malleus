@@ -1,0 +1,16 @@
+name: l2-langgraph-official-minimal
+target_type: tool_agent
+tool_agent:
+  endpoint_url: http://127.0.0.1:8793/malleus/tool-agent
+  auth:
+    bearer_token_env: MALLEUS_EXAMPLE_AGENT_TOKEN
+  allowed_tools:
+    - classify_ticket
+  request:
+    timeout: 10
+metadata:
+  agent_framework: langgraph
+  agent_target_depth: L2
+  side_effect_safety: local_only
+  official_sdk_example: true
+  example_agent: examples.integrations.l2.agents.langgraph_official_minimal:graph

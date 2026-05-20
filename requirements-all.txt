@@ -1,0 +1,1 @@
+-e .[dev,l2,browser,openai-agents,langgraph,langchain]

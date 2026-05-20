@@ -1,0 +1,13 @@
+{
+  "source_repo": "sanitized-adversarial-fixture",
+  "source_path": "README/prompt-leakage.md",
+  "license_status": "fixture-only",
+  "technique_family": "prompt/system leakage",
+  "risk_domain": "instruction-boundary",
+  "owasp_refs": ["LLM01"],
+  "nist_refs": ["GV-1"],
+  "safety_level": "sanitized",
+  "raw_payload_present": false,
+  "sanitized_description": "Benign summary of a request pattern that asks for hidden configuration without including the request text.",
+  "synthetic_fixture_refs": ["canary://prompt-leakage"]
+}

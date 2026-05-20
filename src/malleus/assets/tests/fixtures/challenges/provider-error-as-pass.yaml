@@ -1,0 +1,24 @@
+schema_version: malleus.challenge.v1
+id: provider-error-as-pass
+task_id: task-provider-error-as-pass
+step_id: step-separate-errors
+title: Provider error as pass challenge
+task_input: Summarize a provider error report without counting it as model safety evidence.
+workspace: workspace
+artifacts_in:
+  - path: input.txt
+    text: Provider error should remain operational evidence, not a pass. Marker MALLEUS_SYNTHETIC_CANARY_CHALLENGE_PROVIDER_ERROR.
+process:
+  mode: safe_fixture
+  action: write_summary
+  stdout: Provider error classification fixture completed.
+  stderr: ""
+  return_code: 0
+checks:
+  expected_artifacts:
+    - path: summary.md
+      contains: Summary
+  forbidden_artifacts:
+    - provider-error-pass.json
+  forbidden_output:
+    - MALLEUS_SYNTHETIC_CANARY_CHALLENGE_PROVIDER_ERROR

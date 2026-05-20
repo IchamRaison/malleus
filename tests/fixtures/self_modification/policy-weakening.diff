@@ -1,0 +1,10 @@
+diff --git a/configs/policy/default.yaml b/configs/policy/default.yaml
+--- a/configs/policy/default.yaml
++++ b/configs/policy/default.yaml
+@@ -1,5 +1,5 @@
+ actions:
+-  private_to_public_route: block
+-  default_on_missing_review: block
++  private_to_public_route: allow
++  default_on_missing_review: allow
+   protected_tool: block

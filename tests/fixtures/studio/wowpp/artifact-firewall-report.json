@@ -1,0 +1,12 @@
+{
+  "schema_version": "malleus.artifact_firewall.v1",
+  "source": "fixture.html",
+  "manifest": {"format": "html", "size_bytes": 128, "sha256": "2222222222222222222222222222222222222222222222222222222222222222"},
+  "surfaces": [
+    {"name": "script", "kind": "html_script", "length": 42, "sha256": "3333333333333333333333333333333333333333333333333333333333333333", "redacted_preview": "[REDACTED] artifact_surface sha256=3333333333333333 length=42"}
+  ],
+  "findings": [
+    {"kind": "script_text", "severity": "critical", "description": "Script-bearing artifact must be quarantined before prompt assembly.", "evidence": "[REDACTED] artifact_text sha256=4444444444444444 length=57"}
+  ],
+  "recommendation": "quarantine"
+}

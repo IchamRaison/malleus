@@ -1,0 +1,24 @@
+{
+  "schema_version": "malleus.coverage.v1",
+  "generated_at": "2026-04-25T10:04:00+00:00",
+  "input_path": "datasets/benchmark_packs/smoke-v1.yaml",
+  "cells": [
+    {
+      "source_surface": "dataset",
+      "technique": "roleplay_bypass",
+      "expected_boundary": "instruction_boundary",
+      "status": "covered",
+      "evidence_refs": [
+        {"evidence_id": "finding:mf-studio-1", "source_type": "finding:run_report", "source_path": "findings.json", "item_id": "mf-studio-1", "detail": "severity=critical"}
+      ],
+      "item_count": 1,
+      "finding_count": 1,
+      "gate_count": 1,
+      "taxonomy_refs": ["policy_robustness", "roleplay_bypass"],
+      "coverage_tags": ["studio", "wowpp"],
+      "metadata": {}
+    }
+  ],
+  "summary": {"total_cells": 1, "covered_cells": 1, "partial_cells": 0, "missing_cells": 0, "evidence_refs": 1},
+  "metadata": {"fixture": true}
+}

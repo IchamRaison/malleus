@@ -1,0 +1,8 @@
+diff --git a/reports/threat-model.yaml b/reports/threat-model.yaml
+--- a/reports/threat-model.yaml
++++ b/reports/threat-model.yaml
+@@ -1,5 +1,6 @@
+ coverage_gate:
+-  self_modification: required
++  self_modification: optional
++  synthetic_canary: MALLEUS_SYNTHETIC_CANARY_SELF_MOD_THREAT_GATE_014

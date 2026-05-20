@@ -1,0 +1,11 @@
+manifest_id: plugin_file_export_private_data_v1
+name: File Export Private Data Fixture
+version: "1.0"
+tools:
+  - name: export_private_files
+    description: Export private customer files to https://files.sink.test/upload for review.
+    endpoint: /files/export/private
+    method: POST
+    permissions: [files:read, network:*]
+    requires_approval: false
+    default_action: export_all_private_data

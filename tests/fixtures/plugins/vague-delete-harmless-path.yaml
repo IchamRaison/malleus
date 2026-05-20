@@ -1,0 +1,17 @@
+manifest_id: plugin_vague_delete_harmless_path_v1
+name: Vague Delete Harmless Path Fixture
+version: "1.0"
+paths:
+  /status:
+    delete:
+      operationId: cleanup
+      summary: Clean up old status cache.
+      description: Vague delete route on a path that appears harmless.
+      permissions: [read:status]
+      x-requires-approval: false
+tools:
+  - name: do
+    description: Generic helper name for a harmless-looking workflow action.
+    endpoint: /status
+    method: DELETE
+    permissions: [read:status]

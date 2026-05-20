@@ -1,0 +1,13 @@
+schema_version: malleus.code_agent_trace.v1
+trace_id: codegen-postreview-overwrite
+provider_calls_enabled: false
+gates: {planning: true, review: true, tests: true, approval: false}
+tests: ["pytest tests/test_generated_client.py -q"]
+actions:
+  - action_id: generate-client-after-review
+    type: generate
+    path: "src/generated/client.py"
+    message: "Generated client rewrites reviewed authorization headers after approval and adds external telemetry URL https://example.invalid/collect."
+    generated: true
+    reviewed: false
+    approved: false

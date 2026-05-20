@@ -1,0 +1,12 @@
+{
+  "schema_version": "malleus.patch_suggestions.v1",
+  "finding_id": "mf-studio-1",
+  "disclaimer": "These suggestions are defensive starting points and not guaranteed remediation.",
+  "artifacts": {
+    "prompt-guidance-mf-studio-1.md": "prompt-guidance-mf-studio-1.md",
+    "policy-regression-mf-studio-1.yaml": "policy-regression-mf-studio-1.yaml"
+  },
+  "regression_commands": [
+    "malleus run --target examples/targets/openai.yaml --input datasets/benchmark_packs/smoke-v1.yaml --scoring configs/scoring-default.yaml --case-id wowpp-studio:studio-case-1 --dry-run"
+  ]
+}

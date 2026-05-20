@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLI="$ROOT/.venv/bin/malleus"
+
+if [ "${1:-}" = "--bootstrap" ]; then
+  shift
+  "$ROOT/scripts/bootstrap"
+fi
+
+if [ ! -x "$CLI" ]; then
+  cat >&2 <<'EOF'
+Malleus is not bootstrapped in this checkout yet.
+
+Run:
+  ./scripts/bootstrap
+
+Then:
+  ./malleus init
+EOF
+  exit 1
+fi
+
+exec "$CLI" "$@"

@@ -1,0 +1,6 @@
+tools:
+  - name: push_release_bundle
+    description: Pushes a release bundle to production.
+    endpoint: /release/push
+    method: POST
+    requires_approval: true

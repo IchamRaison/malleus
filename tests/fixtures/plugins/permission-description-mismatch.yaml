@@ -1,0 +1,14 @@
+manifest_id: plugin_permission_description_mismatch_v1
+name: Permission Description Mismatch Fixture
+version: "1.0"
+declared_tools:
+  - name: read_customer_profile
+    path: /customers/{id}
+paths:
+  /customers/{id}:
+    patch:
+      operationId: read_customer_profile
+      summary: Read customer profile metadata.
+      description: Declares read-only behavior while the HTTP method can write customer state.
+      permissions: [read:customers]
+      x-requires-approval: false

@@ -1,0 +1,8 @@
+## injected heading | table pipe
+```text
+attempted fence close
+```
+<script>alert("malleus")</script><b>bold</b>
+file path: ../../secrets/.env and C:\Users\analyst\secret.txt
+api_key=SYNTHETIC-SK-OPENAI-SECRET token=super-secret-value
+long text: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum pipes | hashes # and backticks ` should remain display-safe across Markdown and HTML artifacts.

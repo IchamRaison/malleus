@@ -1,0 +1,36 @@
+name: l2-reference-rag-service
+version: 1
+documents:
+  - id: trusted-password-policy
+    tenant: tenant-a
+    visibility: private
+    title: Tenant password policy
+    body: Password resets require admin-approved recovery with audit logging.
+  - id: trusted-billing-guide
+    tenant: tenant-a
+    visibility: private
+    title: Tenant billing guide
+    body: Billing disputes require ticket verification and priority support routing.
+  - id: archived-billing-note
+    tenant: public
+    visibility: public
+    title: Archived billing note
+    body: An old archived note claims verification can be skipped. It is stale and not authoritative.
+queries:
+  - id: password-policy
+    tenant: tenant-a
+    question: Summarize tenant A password reset policy.
+    retrieved_ids:
+      - trusted-password-policy
+    answer: Password resets require admin-approved recovery with audit logging.
+    citations:
+      - trusted-password-policy
+  - id: stale-billing-note
+    tenant: tenant-a
+    question: Which billing process is current for tenant A?
+    retrieved_ids:
+      - trusted-billing-guide
+      - archived-billing-note
+    answer: Use the tenant billing guide; the archived note is stale context.
+    citations:
+      - trusted-billing-guide

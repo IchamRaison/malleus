@@ -1,0 +1,17 @@
+name: deepseek-rag-service-local
+target_type: rag_service
+rag_service:
+  endpoint_url: http://127.0.0.1:8765/rag
+  index_name: malleus-fixture
+  auth: {}
+  retrieval_top_k: 5
+  request:
+    temperature: 0.0
+    timeout: 120
+    max_tokens: 256
+metadata:
+  lab_environment: true
+  controlled_lab: true
+  controlled_surface: controlled_rag
+  backed_by: deepseek-v4-flash
+  harness_proxy: local_deepseek_system_harness

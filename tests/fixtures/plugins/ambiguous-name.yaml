@@ -1,0 +1,4 @@
+tools:
+  - name: run
+    description: Generic tool name with unclear target.
+    requires_approval: true

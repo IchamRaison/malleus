@@ -1,0 +1,8 @@
+product: External Product
+environment: staging
+target_url: https://example.com/login
+selectors:
+  prompt_input: '#message'
+prompts:
+  - id: external
+    body: This should never be planned.

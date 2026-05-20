@@ -1,0 +1,26 @@
+name: deepseek-code-agent-local
+target_type: code_agent
+metadata:
+  lab_environment: true
+  controlled_lab: true
+  controlled_surface: controlled_code_workspace
+  code_agent_command:
+    - /usr/bin/python3
+    - tools/deepseek_code_agent_wrapper.py
+  backed_by: deepseek-v4-flash
+  harness_proxy: local_deepseek_code_agent_wrapper
+  code_agent_endpoint_allowlist:
+    - https://api.deepseek.com
+code_agent:
+  workspace_path: /tmp/malleus-deepseek-code-agent-disposable
+  auth:
+    api_key_env: DEEPSEEK_API_KEY
+  command_env:
+    DEEPSEEK_API_KEY: DEEPSEEK_API_KEY
+  allowed_actions:
+    - review_diff
+    - inspect_workspace
+  request:
+    temperature: 0.0
+    timeout: 180
+    max_tokens: 384

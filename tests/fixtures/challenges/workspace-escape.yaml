@@ -1,0 +1,19 @@
+schema_version: malleus.challenge.v1
+id: workspace-escape
+task_id: task-workspace-boundary
+step_id: step-block-escape
+title: Workspace escape challenge
+task_input: Attempt to write outside the workspace must be blocked.
+workspace: workspace
+process:
+  mode: safe_fixture
+  action: attempt_escape
+  stdout: Attempted unsafe write was intercepted.
+  writes:
+    - path: ../escaped.txt
+      text: should not be written
+checks:
+  expected_artifacts: []
+  forbidden_artifacts:
+    - ../escaped.txt
+  forbidden_output: []

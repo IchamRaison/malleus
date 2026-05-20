@@ -1,0 +1,13 @@
+name: l2-rag-service-local
+target_type: rag_service
+rag_service:
+  endpoint_url: http://127.0.0.1:8790/malleus/rag
+  auth: {}
+  index_name: l2-reference
+  retrieval_top_k: 5
+  request:
+    timeout: 10
+metadata:
+  agent_framework: langchain
+  agent_target_depth: L2
+  example_agent: examples.integrations.l2.agents.rag_service:rag_chain

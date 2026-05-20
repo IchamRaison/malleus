@@ -1,0 +1,18 @@
+name: deepseek-workflow-harness-local
+target_type: workflow_harness
+metadata:
+  lab_environment: true
+  controlled_lab: true
+  controlled_surface: controlled_workflow
+  workflow_harness_mode: lab_sandbox
+  backed_by: deepseek-v4-flash
+  harness_proxy: local_deepseek_system_harness
+workflow_harness:
+  endpoint_url: http://127.0.0.1:8765/workflow
+  workflow_id: malleus-deepseek-lab-sandbox
+  environment: sandbox
+  auth: {}
+  request:
+    temperature: 0.0
+    timeout: 120
+    max_tokens: 256

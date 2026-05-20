@@ -1,0 +1,37 @@
+schema_version: malleus.mutation_profile.v1
+id: selected-v1
+version: 1.0.0
+name: Selected v1 mutation profile
+optional: false
+deep: false
+default: true
+substitutions: []
+metadata:
+  release_matrix_ref: selected-v1
+  description: Stable release mutation profile for default regression coverage.
+mutations:
+  - unicode_wrap
+  - zero_width_insert
+  - zero_width_insert_6
+  - soft_hyphen_insert
+  - word_joiner_insert
+  - homoglyph_o_zero
+  - homoglyph_l_one
+  - leetspeak
+  - middle_dot_insert
+  - thin_space_insert
+  - triple_backtick_wrap
+  - xml_comment_wrap
+  - angle_bracket_wrap
+  - double_quote_wrap
+  - chat_transcript_block
+  - transcript_user_lines
+  - transcript_assistant_lines
+  - tool_result_block
+  - function_call_block
+  - json_prompt_field
+  - yaml_literal_block
+  - front_matter_block
+  - diff_added_lines
+  - chunk_4_lines
+  - uppercase_text

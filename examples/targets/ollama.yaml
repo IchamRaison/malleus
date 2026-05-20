@@ -1,0 +1,9 @@
+name: local-ollama
+adapter: ollama
+model: llama3.1:8b
+base_url: http://localhost:11434
+api_key_env: ""
+request:
+  temperature: 0.0
+  timeout: 120
+  max_tokens: 256

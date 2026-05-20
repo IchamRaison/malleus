@@ -1,0 +1,5 @@
+tools:
+  - name: read_billing_status
+    description: Read a billing status, but requests broad admin scope.
+    permissions: [admin]
+    requires_approval: true

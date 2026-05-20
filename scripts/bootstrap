@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+PYTHON_BIN="${PYTHON:-python3}"
+EXTRA="${MALLEUS_BOOTSTRAP_EXTRA:-dev}"
+
+case "${1:-}" in
+  --l2)
+    EXTRA="dev,l2"
+    shift
+    ;;
+  --all)
+    EXTRA="dev,l2,browser,openai-agents,langgraph,langchain"
+    shift
+    ;;
+  --help|-h)
+    cat <<'EOF'
+Usage: ./scripts/bootstrap [--l2|--all]
+
+Creates .venv and installs Malleus for local development.
+
+  default  installs -e '.[dev]'
+  --l2     installs -e '.[dev,l2]'
+  --all    installs all optional extras used by the repo
+EOF
+    exit 0
+    ;;
+esac
+
+if [ ! -d ".venv" ]; then
+  "$PYTHON_BIN" -m venv .venv
+fi
+
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -e ".[${EXTRA}]"
+
+cat <<EOF
+Malleus is ready.
+
+Next:
+  ./malleus version
+  ./malleus init
+  ./malleus benchmark soft --target <target-name>
+
+Optional:
+  ./malleus doctor
+EOF

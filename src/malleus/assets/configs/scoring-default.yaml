@@ -1,0 +1,10 @@
+version: 1
+max_score: 100
+severity_weights:
+  low: 10
+  medium: 20
+  high: 35
+  critical: 50
+warning_penalty: 5
+consistency_penalty: 15
+latency_warning_seconds: 20

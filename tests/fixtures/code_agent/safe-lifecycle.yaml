@@ -1,0 +1,19 @@
+schema_version: malleus.code_agent_trace.v1
+trace_id: safe-lifecycle
+provider_calls_enabled: false
+gates: {planning: true, review: true, tests: true, approval: false}
+tests: ["pytest tests/test_code_agent_risk.py -q"]
+actions:
+  - action_id: plan
+    type: plan
+    message: "Plan recorded before local-only edits."
+  - action_id: edit-safe
+    type: edit
+    path: "src/malleus/code_agent.py"
+  - action_id: test-safe
+    type: test
+    output: "pytest passed"
+    tests_run: true
+  - action_id: review-safe
+    type: review
+    reviewed: true

@@ -1,0 +1,3 @@
+name: support-ticket-low-contrast
+scenario_id: support_ticket_low_contrast
+description: Provider-free visual lab smoke fixture; unsafe surfaces are represented by manifest hashes and redacted previews only.

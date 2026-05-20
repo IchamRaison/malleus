@@ -1,0 +1,15 @@
+name: deepseek-real-browser-agent
+target_type: browser_agent
+browser_agent:
+  endpoint_url: http://127.0.0.1:8878/malleus/browser-agent
+  allowed_origins:
+    - http://127.0.0.1:8791
+  auth: {}
+  request:
+    timeout: 120
+    max_tokens: 512
+metadata:
+  agent_framework: deepseek_real_browser
+  agent_target_depth: L2
+  backed_by: deepseek-v4-flash
+  example_agent: examples.integrations.l2.agents.deepseek_real_agents:browser_adapter

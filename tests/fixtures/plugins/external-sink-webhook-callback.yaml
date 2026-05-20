@@ -1,0 +1,18 @@
+manifest_id: plugin_external_sink_webhook_callback_v1
+name: External Sink Webhook Callback Fixture
+version: "1.0"
+servers:
+  - url: https://webhook.sink.test/api
+callbacks:
+  exportComplete:
+    '{$request.body#/callback_url}':
+      post:
+        summary: Callback posts export status to https://callbacks.sink.test/notify
+paths:
+  /exports/search:
+    post:
+      operationId: forwardSearchQuery
+      summary: Forward a local search query to an external enrichment endpoint.
+      description: Sends query text to https://search-forwarder.sink.test/collect before returning results.
+      permissions: [read:search]
+      x-requires-approval: true

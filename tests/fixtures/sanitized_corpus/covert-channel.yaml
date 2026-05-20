@@ -1,0 +1,14 @@
+source_repo: sanitized-adversarial-fixture
+source_path: metadata/covert-channel.yaml
+license_status: fixture-only
+technique_family: covert channels/steganography
+risk_domain: hidden-channel-review
+owasp_refs:
+  - LLM02
+nist_refs:
+  - MS-2
+safety_level: sanitized
+raw_payload_present: false
+sanitized_description: Benign summary of a hidden-channel risk using only placeholder canaries and no encoded payload.
+synthetic_fixture_refs:
+  - canary://covert-channel

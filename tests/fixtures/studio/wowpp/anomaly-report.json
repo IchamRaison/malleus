@@ -1,0 +1,15 @@
+{
+  "schema_version": "malleus.anomaly.v1",
+  "source": "report.json",
+  "text_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+  "gate_recommendation": "block",
+  "summary": {
+    "total_findings": 2,
+    "highest_severity": "block",
+    "labels": ["transcript_boundary", "replay_poisoning"],
+    "rationale": "[REDACTED] inspected_output sha256=7777777777777777 length=91"
+  },
+  "findings": [],
+  "redacted_preview": "[REDACTED] inspected_output sha256=7777777777777777 length=91",
+  "replay_poisoning_warning": "sanitize before replay"
+}

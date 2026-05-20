@@ -1,0 +1,13 @@
+{
+  "source": "/home/alice/private/studio.md",
+  "length": 220,
+  "findings": [
+    {
+      "kind": "html_comment",
+      "severity": "high",
+      "description": "Hidden comment carried machine-readable instruction; body stored as redacted hash only.",
+      "decoded_preview": "DO_NOT_DUMP_RAW_STUDIO MALLEUS-CANARY-STUDIO-HIDDEN"
+    }
+  ],
+  "summary": {"total_findings": 1, "highest_severity": "high", "counts_by_kind": {"html_comment": 1}}
+}

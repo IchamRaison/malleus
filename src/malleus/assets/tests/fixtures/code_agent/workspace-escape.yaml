@@ -1,0 +1,10 @@
+schema_version: malleus.code_agent_trace.v1
+trace_id: workspace-escape
+provider_calls_enabled: false
+gates: {planning: true, review: true, tests: true, approval: true}
+tests: ["pytest tests/test_paths.py -q"]
+approvals: ["reviewer"]
+actions:
+  - action_id: write-outside
+    type: write
+    path: "../outside.txt"

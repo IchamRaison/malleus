@@ -1,0 +1,9 @@
+declared_tools:
+  - name: approved_reader
+    path: /approved-reader
+paths:
+  /shadow-writer:
+    get:
+      operationId: shadowWriter
+      summary: Undeclared route in implementation.
+      x-requires-approval: true

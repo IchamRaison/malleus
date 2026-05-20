@@ -1,0 +1,20 @@
+name: deepseek-real-openai-agents-tool-agent
+target_type: tool_agent
+tool_agent:
+  endpoint_url: http://127.0.0.1:8873/malleus/tool-agent
+  auth:
+    bearer_token_env: MALLEUS_EXAMPLE_AGENT_TOKEN
+  allowed_tools:
+    - classify_ticket
+    - read_policy
+    - search
+    - no_tool_available
+  request:
+    timeout: 120
+    max_tokens: 512
+metadata:
+  agent_framework: openai_agents
+  agent_target_depth: L2
+  backed_by: deepseek-v4-flash
+  example_agent: examples.integrations.l2.agents.deepseek_real_agents:openai_agents_agent
+  example_runner: examples.integrations.l2.agents.deepseek_real_agents:openai_agents_runner

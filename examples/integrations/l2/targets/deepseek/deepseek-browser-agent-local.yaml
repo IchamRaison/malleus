@@ -1,0 +1,16 @@
+name: local-browser-agent
+target_type: browser_agent
+browser_agent:
+  endpoint_url: http://127.0.0.1:8765/malleus/browser-agent
+  allowed_origins:
+    - http://localhost:8080
+    - http://127.0.0.1:8080
+  request:
+    timeout: 30
+    max_tokens: 512
+metadata:
+  lab_environment: true
+  controlled_lab: true
+  controlled_surface: controlled_browser
+  backed_by: deepseek-v4-flash
+  harness_proxy: local_deepseek_system_harness

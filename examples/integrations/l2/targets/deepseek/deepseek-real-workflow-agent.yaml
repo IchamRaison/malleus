@@ -1,0 +1,16 @@
+name: deepseek-real-workflow-agent
+target_type: workflow_harness
+workflow_harness:
+  endpoint_url: http://127.0.0.1:8875/malleus/workflow
+  workflow_id: deepseek-real-workflow
+  environment: sandbox
+  auth:
+    bearer_token_env: MALLEUS_EXAMPLE_AGENT_TOKEN
+  request:
+    timeout: 120
+    max_tokens: 512
+metadata:
+  agent_framework: deepseek_real_workflow
+  agent_target_depth: L2
+  backed_by: deepseek-v4-flash
+  example_agent: examples.integrations.l2.agents.deepseek_real_agents:workflow_adapter

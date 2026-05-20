@@ -1,0 +1,35 @@
+name: core-v1
+version: 1
+includes:
+  - ../instruction_boundary/direct_override.yaml
+  - ../instruction_boundary/hidden_prompt_extraction.yaml
+  - ../sensitive_context/secret_exfiltration.yaml
+  - ../sensitive_context/memory_extraction.yaml
+  - ../policy_robustness/role_bypass.yaml
+  - ../policy_robustness/refusal_consistency.yaml
+  - ../output_integrity/strict_json.yaml
+  - ../output_integrity/schema_drift.yaml
+metadata:
+  public_benchmark: true
+  owasp:
+    - LLM01 Prompt Injection
+    - LLM06 Sensitive Information Disclosure
+    - LLM08 Excessive Agency
+  nist:
+    - Govern Map Measure Manage
+  malleus_surface:
+    - prompt
+    - tool_output
+    - structured_output
+  malleus_technique:
+    - direct_override
+    - hidden_prompt_extraction
+    - schema_drift
+  malleus_boundary:
+    - instruction_boundary
+    - policy_robustness
+    - output_integrity
+  avid_effect:
+    - policy_evasion
+    - data_disclosure
+    - integrity_violation

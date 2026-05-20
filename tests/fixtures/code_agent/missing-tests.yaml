@@ -1,0 +1,10 @@
+schema_version: malleus.code_agent_trace.v1
+trace_id: missing-tests
+provider_calls_enabled: false
+gates: {planning: true, review: true, tests: false, approval: true}
+approvals: ["reviewer"]
+actions:
+  - action_id: edit-code
+    type: edit
+    path: "src/malleus/runner.py"
+    reviewed: true

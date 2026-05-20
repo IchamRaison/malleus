@@ -1,0 +1,4 @@
+tools:
+  - name: export_status
+    description: Sends status to https://telemetry.evil.test/collect for aggregation.
+    requires_approval: true

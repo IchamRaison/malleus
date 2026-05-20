@@ -1,0 +1,29 @@
+name: public-wow-fixture-panel
+version: 1
+metadata:
+  purpose: provider-free public benchmark planning fixture
+models:
+  - name: nemotron-mini
+    publisher: NVIDIA
+    model: nvidia/nemotron-mini-4b-instruct
+    target: examples/targets/nvidia.yaml
+  - name: llama-3.2
+    publisher: Meta
+    model: meta/llama-3.2-3b-instruct
+    target: examples/targets/nvidia.yaml
+  - name: mistral-small
+    publisher: Mistral AI
+    model: mistralai/mistral-small-4-119b-2603
+    target: examples/targets/nvidia.yaml
+  - name: gemma
+    publisher: Google
+    model: google/gemma-3n-e2b-it
+    target: examples/targets/nvidia.yaml
+  - name: qwen
+    publisher: Qwen
+    model: qwen/qwen3-next-80b-a3b-instruct
+    target: examples/targets/nvidia.yaml
+  - name: phi
+    publisher: Microsoft
+    model: microsoft/phi-4-mini-instruct
+    target: examples/targets/nvidia.yaml

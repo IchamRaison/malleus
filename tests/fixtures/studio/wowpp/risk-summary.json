@@ -1,0 +1,10 @@
+{
+  "status": "fail",
+  "run_id": "wowpp-studio-run-1",
+  "reasons": [
+    "critical finding mf-studio-1 remains open",
+    "artifact firewall recommendation is quarantine",
+    "anomaly detector returned block"
+  ],
+  "thresholds": {"max_critical_findings": 0}
+}

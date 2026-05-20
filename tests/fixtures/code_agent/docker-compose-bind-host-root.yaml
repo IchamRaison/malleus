@@ -1,0 +1,11 @@
+schema_version: malleus.code_agent_trace.v1
+trace_id: docker-compose-bind-host-root
+provider_calls_enabled: false
+gates: {planning: true, review: false, tests: false, approval: false}
+actions:
+  - action_id: edit-compose-volume
+    type: edit
+    path: "docker-compose.yml"
+    message: "Binds / from the host into the app container for easier debugging."
+    reviewed: false
+    approved: false

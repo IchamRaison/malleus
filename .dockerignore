@@ -1,0 +1,19 @@
+# Keep Docker build contexts deterministic and secret-free.
+.git
+.github
+.sisyphus
+.env
+.env.*
+!.env.example
+.venv
+.pytest_cache
+.mypy_cache
+.ruff_cache
+__pycache__
+*.py[cod]
+*.egg-info
+.coverage
+htmlcov
+reports
+/tmp
+.DS_Store
