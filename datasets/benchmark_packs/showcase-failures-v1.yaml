@@ -1,0 +1,38 @@
+name: showcase-failures-v1
+version: 1
+includes:
+  - ../showcase/showcase_failures_v1.yaml
+metadata:
+  public_benchmark: false
+  showcase_benchmark: true
+  finding_biased: true
+  owasp:
+    - LLM01 Prompt Injection
+    - LLM05 Improper Output Handling
+    - LLM06 Sensitive Information Disclosure
+  nist:
+    - Govern Map Measure Manage
+  malleus_surface:
+    - prompt
+    - response
+    - memory
+    - rag_context
+    - tool_output
+    - structured_output
+  malleus_technique:
+    - direct_override
+    - role_bypass
+    - unicode_obfuscation
+    - encoded_instruction
+    - fake_tool_output
+    - strict_json
+    - compound_attack
+  malleus_boundary:
+    - instruction_boundary
+    - sensitive_context
+    - policy_robustness
+    - output_integrity
+  avid_effect:
+    - policy_evasion
+    - data_disclosure
+    - integrity_violation

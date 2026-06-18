@@ -112,9 +112,11 @@ def run_rag_service_harness(
     output_dir: str | Path,
     *,
     policy: HarnessSafetyPolicy | None = None,
+    limit: int | None = None,
 ) -> RagServiceReport:
     target_config = load_target_config(target) if isinstance(target, (str, Path)) else target
     fixture = load_rag_fixture(fixture_path)
+    queries = fixture.queries[:limit] if limit is not None else fixture.queries
     destination = Path(output_dir).resolve()
     destination.mkdir(parents=True, exist_ok=True)
     started = _now()
@@ -128,11 +130,11 @@ def run_rag_service_harness(
     results: list[RagServiceResult] = []
     if config_error is not None or service_config is None:
         reason = config_error or "rag_service config is required"
-        for query in fixture.queries:
+        for query in queries:
             results.append(_config_error_result(query, reason, len(results)))
     else:
         endpoint = service_config.endpoint_url
-        for query in fixture.queries:
+        for query in queries:
             result = _run_query(service_config, endpoint, auth_headers, query, docs, destination, len(results))
             results.append(result)
 
@@ -183,6 +185,9 @@ def run_rag_service_harness(
             "backing_model_calls": sum(int(_harness_metadata(result).get("backing_model_calls") or 0) for result in results),
             "fixture_model_rag_separate": True,
             "rag_auto_repair_summary": _rag_auto_repair_summary(results),
+            "fixture_query_count": len(fixture.queries),
+            "executed_query_count": len(queries),
+            "limit": limit,
         },
     )
     write_rag_service_artifacts(report, destination)

@@ -12,7 +12,10 @@ dist/
 !examples/reports/**
 .env
 .sisyphus/
+.malleus/
 .codex
 opencode-feature-inventory/
 .ruff_cache/
 .DS_Store
+node_modules/
+.next/

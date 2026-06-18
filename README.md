@@ -472,11 +472,25 @@ Use the quickstart first. Use this map when you need one specific path.
 | `./malleus adjudicate --finding <id> --report <dir>` | Records a review decision |
 | `./malleus issues export --findings <file>` | Exports issue drafts locally |
 | `./malleus compound-risk --findings <file>` | Builds compound-risk summaries |
+| `./malleus studio serve` | Starts the local Studio API for live lab runs |
 | `./malleus studio export --report-dir <dir>` | Builds static studio output |
 | `./malleus ui-harness run --config <file>` | Runs scaffold-only UI review |
 | `./malleus workspace init --path <dir>` | Creates a local review workspace |
 | `./malleus workspace status --path <dir>` | Shows workspace status |
 | `./malleus workspace next --path <dir>` | Shows next workspace action |
+
+Studio frontend preview:
+
+```bash
+pip install -e ".[studio]"
+./malleus studio serve
+cd apps/studio
+npm install
+npm run dev
+```
+
+The first Studio lab scope supports existing `chat_completion` targets with `smoke-v1`, `core-v1`, and `soft`, writing run artifacts under `reports/studio-runs/`.
+The Studio UI can also accept a provider API key locally, discover available `/models` when the provider supports it, and create a session target under `.malleus/studio/targets/`. Keys stay in the local Studio API process environment and are not written to the target file.
 
 ### Agent integration examples
 

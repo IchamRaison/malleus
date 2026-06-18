@@ -29,6 +29,10 @@ dev = [
 browser = [
   "playwright>=1.45.0",
 ]
+studio = [
+  "fastapi>=0.115.0",
+  "uvicorn>=0.30.0",
+]
 openai-agents = [
   "openai-agents>=0.14.8",
 ]

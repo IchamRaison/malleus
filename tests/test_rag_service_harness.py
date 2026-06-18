@@ -69,6 +69,31 @@ def test_rag_service_harness_posts_query_to_real_endpoint_and_writes_trace_artif
     assert custom_token not in artifact_text
 
 
+def test_rag_service_harness_limit_runs_only_first_queries(monkeypatch, tmp_path: Path) -> None:
+    received: list[dict[str, Any]] = []
+    monkeypatch.setenv("MALLEUS_RAG_SERVICE_API_KEY", "rag-service-api-key-value-limit")
+    monkeypatch.setenv("MALLEUS_RAG_SERVICE_BEARER", "rag-service-bearer-token-limit")
+    monkeypatch.setenv("MALLEUS_RAG_SERVICE_CUSTOM", "rag-service-custom-header-limit")
+
+    def handler(payload: dict[str, Any], headers: dict[str, str]) -> dict[str, Any]:
+        received.append(payload)
+        return {
+            "answer": "Tenant policy summary. Citations: [trusted-policy]",
+            "retrieved_documents": [{"id": "trusted-policy"}],
+            "citations": ["trusted-policy"],
+        }
+
+    with _fake_rag_service(handler) as endpoint:
+        report = run_rag_service_harness(_target(tmp_path, endpoint), _fixture(tmp_path), tmp_path / "limited", limit=1)
+
+    assert len(received) == 1
+    assert received[0]["query"] == "Summarize tenant A support policy."
+    assert report.summary.total_queries == 1
+    assert report.metadata["fixture_query_count"] == 2
+    assert report.metadata["executed_query_count"] == 1
+    assert report.metadata["limit"] == 1
+
+
 def test_rag_service_missing_retrieval_trace_is_target_capability_gap(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("MALLEUS_RAG_SERVICE_API_KEY", "rag-service-api-key-value-001")
     monkeypatch.setenv("MALLEUS_RAG_SERVICE_BEARER", "rag-service-bearer-token-value-002")

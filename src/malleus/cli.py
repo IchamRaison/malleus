@@ -116,7 +116,7 @@ code_agent_app = typer.Typer(help="Inspect local code-agent VCS and lifecycle tr
 scenario_app = typer.Typer(help="Generate defensive draft scenario artifacts")
 regression_app = typer.Typer(help="Generate and validate provider-free regression packs")
 self_mod_app = typer.Typer(help="Inspect proposed self-modification diffs and traces")
-studio_app = typer.Typer(help="Export a static sanitized studio narrative")
+studio_app = typer.Typer(help="Run the local Studio lab or export a static sanitized studio narrative")
 taxonomy_app = typer.Typer(help="Write taxonomy garden snapshots and diffs")
 ui_harness_app = typer.Typer(help="Plan provider-free local/staging UI harness scaffolds")
 target_app = typer.Typer(help="Manage reusable target model configurations")
@@ -1943,6 +1943,28 @@ def studio_export_command(
     typer.echo(f"HTML: {export.index_html}")
     typer.echo(f"Artifact index: {export.artifact_index}")
     typer.echo(f"Artifacts: {len(export.artifacts)}")
+
+
+@studio_app.command("serve")
+def studio_serve_command(
+    host: str = typer.Option("127.0.0.1", "--host", help="Studio API bind host; keep localhost for local-first operation"),
+    port: int = typer.Option(8765, "--port", min=1, max=65535, help="Studio API port"),
+    runs_root: Path = typer.Option(Path("reports/studio-runs"), "--runs-root", file_okay=False, help="Directory for Studio run artifacts"),
+    config_dir: Path | None = typer.Option(None, "--config-dir", file_okay=False, help="Managed target directory", hidden=True),
+) -> None:
+    try:
+        from malleus.studio_server import run_studio_server
+    except RuntimeError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Malleus Studio API: http://{host}:{port}")
+    typer.echo("Frontend app: apps/studio")
+    typer.echo("Provider calls may be triggered by POST /api/runs; use only authorized targets.")
+    try:
+        run_studio_server(host=host, port=port, runs_root=runs_root, target_dir=config_dir)
+    except RuntimeError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
 
 
 @benchmark_app.command("plan", hidden=True)

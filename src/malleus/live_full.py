@@ -261,6 +261,7 @@ def run_live_surface_pack(
     progress_callback: LiveProgressCallback | None = None,
     mutation_profile_path: str | Path | None = None,
     mutation_limit: int | None = None,
+    surface_limit: int | None = None,
 ) -> tuple[LiveEvidenceMatrix, Path, Path]:
     """Run one canonical live surface through the same routing used by live-full."""
 
@@ -268,6 +269,8 @@ def run_live_surface_pack(
         raise ValueError("request-timeout must be > 0")
     if max_retries < 0:
         raise ValueError("max-retries must be >= 0")
+    if surface_limit is not None and surface_limit < 1:
+        raise ValueError("surface-limit must be >= 1")
     target_config = load_target_config(target_path)
     matrix = load_release_matrix(matrix_path)
     packs = {pack.id: pack for pack in _canonical_live_packs(matrix)}
@@ -340,6 +343,7 @@ def run_live_surface_pack(
             matrix_path=variant_matrix_path,
             out_dir=_surface_variant_out_dir(out_dir, pack_id=pack_id, variant=variant),
             progress_callback=progress_callback,
+            surface_limit=surface_limit,
         )
         if variant != "baseline":
             row = row.model_copy(
@@ -391,6 +395,7 @@ def run_live_surface_pack(
                 "surface_mutations_enabled": mutation_profile_path is not None,
                 "surface_mutation_profile_path": _public_path(mutation_profile_path) if mutation_profile_path is not None else None,
                 "surface_mutation_limit": mutation_limit,
+                "surface_limit": surface_limit,
                 "preflight": preflight.model_dump(mode="json"),
             }
         ),
@@ -699,6 +704,7 @@ def _row_for_pack(
     matrix_path: str | Path,
     out_dir: str | Path,
     progress_callback: LiveProgressCallback | None = None,
+    surface_limit: int | None = None,
 ) -> LiveEvidenceRow:
     target_type = _row_target_type(target)
     if pack.id in SYSTEM_HARNESS_PACK_IDS:
@@ -713,6 +719,7 @@ def _row_for_pack(
             out_dir=out_dir,
             preflight=preflight,
             progress_callback=progress_callback,
+            surface_limit=surface_limit,
         )
     if pack.id in SELF_MODIFICATION_LIVE_PACK_IDS:
         return _run_self_modification_pack_row(
@@ -725,6 +732,8 @@ def _row_for_pack(
             matrix_path=matrix_path,
             out_dir=out_dir,
             preflight=preflight,
+            progress_callback=progress_callback,
+            surface_limit=surface_limit,
         )
     if pack.id in (CLASSIC_LIVE_PACK_IDS | CHALLENGE_LIVE_PACK_IDS) and target_type != "chat_completion":
         return _system_capability_gap_row(
@@ -1160,6 +1169,7 @@ def _run_self_modification_pack_row(
     out_dir: str | Path,
     preflight: LivePreflightReport,
     progress_callback: LiveProgressCallback | None = None,
+    surface_limit: int | None = None,
 ) -> LiveEvidenceRow:
     actual_type = _row_target_type(target)
     if actual_type not in SELF_MODIFICATION_TARGET_TYPES:
@@ -1200,6 +1210,7 @@ def _run_self_modification_pack_row(
                     out_dir=out_dir,
                     preflight=preflight,
                     progress_callback=progress_callback,
+                    surface_limit=surface_limit,
                     metadata={
                         "self_modification_routing": "tool_agent",
                         "auto_wrapped": True,
@@ -1238,6 +1249,7 @@ def _run_self_modification_pack_row(
         out_dir=out_dir,
         preflight=preflight,
         progress_callback=progress_callback,
+        surface_limit=surface_limit,
         metadata={"self_modification_routing": actual_type},
     )
 
@@ -1276,6 +1288,7 @@ def _run_system_harness_pack_row(
     out_dir: str | Path,
     preflight: LivePreflightReport,
     progress_callback: LiveProgressCallback | None = None,
+    surface_limit: int | None = None,
 ) -> LiveEvidenceRow:
     required_type, output_name, runner, report_type, report_name = SYSTEM_HARNESS_REQUIREMENTS[pack.id]
     actual_type = _row_target_type(target)
@@ -1317,6 +1330,7 @@ def _run_system_harness_pack_row(
                     out_dir=out_dir,
                     preflight=preflight,
                     progress_callback=progress_callback,
+                    surface_limit=surface_limit,
                     metadata={
                         "auto_wrapped": True,
                         "auto_wrapper_surface": required_type,
@@ -1343,6 +1357,7 @@ def _run_system_harness_pack_row(
         out_dir=out_dir,
         preflight=preflight,
         progress_callback=progress_callback,
+        surface_limit=surface_limit,
         metadata={},
     )
 
@@ -1364,16 +1379,20 @@ def _run_system_harness_with_config(
     out_dir: str | Path,
     preflight: LivePreflightReport,
     progress_callback: LiveProgressCallback | None,
+    surface_limit: int | None,
     metadata: dict[str, Any],
 ) -> LiveEvidenceRow:
     pack_out = Path(out_dir) / output_name / pack.id
     public_pack_path = _public_path(pack.path)
     system_command = f"{command} # system harness {pack.id} --surface {shlex.quote(public_pack_path)}"
+    runner_kwargs: dict[str, Any] = {}
+    if surface_limit is not None and required_type in {"rag_service", "tool_agent", "browser_agent", "memory_agent"}:
+        runner_kwargs["limit"] = surface_limit
     try:
         if required_type == "code_agent":
             runner(target_path, fixture_path, pack_out, sandbox_backend="bwrap")
         else:
-            runner(target_path, fixture_path, pack_out)
+            runner(target_path, fixture_path, pack_out, **runner_kwargs)
     except (ValueError, OSError) as exc:
         return _system_error_row(pack, run_id=run_id, timestamp=timestamp, command=system_command, target=target, status="target_config_error", reason=f"{pack.id} system harness configuration failed: {type(exc).__name__}: {exc}", metadata={"output_dir": f"{output_name}/{pack.id}", "runner_error_type": type(exc).__name__, "preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
     except Exception as exc:
@@ -1383,7 +1402,7 @@ def _run_system_harness_with_config(
         return _system_error_row(pack, run_id=run_id, timestamp=timestamp, command=system_command, target=target, status="infra_error", reason=f"{pack.id} system harness did not produce {report_name}", metadata={"output_dir": f"{output_name}/{pack.id}", "report_json_exists": False, "preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
     report = report_type.model_validate(json.loads(report_path.read_text(encoding="utf-8")))
     emit_system_harness_progress(progress_callback, pack=pack, report=report)
-    return _system_report_row(pack, report=report, run_id=run_id, timestamp=timestamp, command=system_command, target=target, output_dir=pack_out, output_prefix=f"{output_name}/{pack.id}", report_name=report_name, metadata={"preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
+    return _system_report_row(pack, report=report, run_id=run_id, timestamp=timestamp, command=system_command, target=target, output_dir=pack_out, output_prefix=f"{output_name}/{pack.id}", report_name=report_name, metadata={"preflight_text_status": preflight.text_status, "surface_limit": surface_limit, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
 
 
 def _system_report_row(pack: ReleaseMatrixPackRef, *, report: Any, run_id: str, timestamp: str, command: str, target: LiveTargetMetadata, output_dir: Path, output_prefix: str, report_name: str, metadata: dict[str, Any]) -> LiveEvidenceRow:

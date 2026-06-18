@@ -42,6 +42,9 @@ def emit_system_harness_progress(callback: LiveProgressCallback | None, *, pack:
             evidence_fidelity=evidence_fidelity,
             response=_system_result_excerpt(result),
             trace_summary=_system_result_trace_summary(result),
+            evidence_ref=getattr(result, "evidence_ref", None),
+            artifact_refs=_system_result_artifacts(result),
+            output_summary=_system_result_output_summary(result),
         )
 
 
@@ -75,13 +78,76 @@ def _system_result_trace_summary(result: Any) -> dict[str, Any]:
             "tool_calls": len(tool_calls),
             "actions": len(actions),
             "blocked_operations": len(blocked),
+            "tool_call_count": len(tool_calls),
+            "action_count": len(actions),
+            "blocked_operation_count": len(blocked),
+            "tool_call_names": [_tool_call_label(item) for item in tool_calls[:20]],
+            "action_names": [_action_label(item) for item in actions[:20]],
+            "blocked_operation_names": [_action_label(item) for item in blocked[:20]],
             "retrieved_ids": list(retrieved)[:20],
             "cited_ids": list(cited)[:20],
             "changed_files": list(changed_files)[:20],
+            "file_write_count": getattr(result, "file_write_count", 0),
             "target_call_count": getattr(result, "target_call_count", 0),
             "target_trace_count": getattr(result, "target_trace_count", 0),
         }
     )
+
+
+def _system_result_artifacts(result: Any) -> list[dict[str, Any]]:
+    artifacts: list[dict[str, Any]] = []
+    for artifact in getattr(result, "artifact_refs", []) or []:
+        if hasattr(artifact, "model_dump"):
+            artifacts.append(artifact.model_dump(mode="json"))
+        elif isinstance(artifact, dict):
+            artifacts.append(dict(artifact))
+        else:
+            artifacts.append({"path": str(artifact)})
+    return sanitize_metadata(artifacts[:20])
+
+
+def _system_result_output_summary(result: Any) -> dict[str, Any]:
+    summary: dict[str, Any] = {}
+    for field in (
+        "answer_length",
+        "answer_sha256",
+        "final_answer_length",
+        "final_answer_sha256",
+        "dom_length",
+        "dom_sha256",
+        "file_write_count",
+        "evidence_strength",
+    ):
+        value = getattr(result, field, None)
+        if value not in (None, "", [], {}):
+            summary[field] = value
+    command = getattr(result, "command", None)
+    if command is not None:
+        summary["command"] = command.model_dump(mode="json") if hasattr(command, "model_dump") else str(command)
+    return sanitize_metadata(summary)
+
+
+def _tool_call_label(item: Any) -> str:
+    tool_name = getattr(item, "tool_name", None) or getattr(item, "name", None) or getattr(item, "tool", None)
+    status = getattr(item, "status", None) or getattr(item, "decision", None)
+    if tool_name and status:
+        return f"{tool_name} ({status})"
+    if tool_name:
+        return str(tool_name)
+    if isinstance(item, dict):
+        name = item.get("tool_name") or item.get("name") or item.get("tool")
+        status_value = item.get("status") or item.get("decision")
+        return f"{name} ({status_value})" if name and status_value else str(name or item)
+    return str(item)
+
+
+def _action_label(item: Any) -> str:
+    action_type = getattr(item, "action_type", None) or getattr(item, "type", None) or getattr(item, "name", None)
+    target = getattr(item, "target", None) or getattr(item, "path", None) or getattr(item, "selector", None)
+    status = getattr(item, "status", None)
+    pieces = [str(part) for part in (action_type, target) if part]
+    label = " -> ".join(pieces) if pieces else str(item)
+    return f"{label} ({status})" if status else label
 
 
 def _report_has_auto_wrapper_results(report: Any) -> bool:
