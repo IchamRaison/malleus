@@ -65,7 +65,7 @@ def test_init_command_wraps_target_init_and_prints_next_path(tmp_path: Path) -> 
     assert f"malleus benchmark soft --target {target_path}" in result.output
 
 
-def test_run_command_writes_reports(monkeypatch) -> None:
+def test_run_command_writes_reports(monkeypatch, tmp_path: Path) -> None:
     runner = CliRunner()
 
     captured = {}
@@ -87,46 +87,45 @@ def test_run_command_writes_reports(monkeypatch) -> None:
         return Report()
 
     monkeypatch.setattr("malleus.cli.run_benchmark", fake_run)
+    monkeypatch.chdir(tmp_path)
+    Path("out").mkdir()
+    Path("target.yaml").write_text(
+        "name: t\nadapter: openai_compatible\nmodel: m\nbase_url: https://example.test/v1\napi_key_env: OPENAI_API_KEY\n",
+        encoding="utf-8",
+    )
+    Path("input.yaml").write_text(
+        "name: d\nversion: 1\ncategory: c\nsubcategory: s\ncases:\n  - id: c1\n    severity: low\n    objective: x\n    prompt: hi\n",
+        encoding="utf-8",
+    )
+    Path("scoring.yaml").write_text(
+        "version: 1\nmax_score: 100\nseverity_weights:\n  low: 10\n  medium: 20\n  high: 35\n  critical: 50\n",
+        encoding="utf-8",
+    )
+    result = runner.invoke(
+        app,
+        [
+            "run",
+            "--target",
+            "target.yaml",
+            "--input",
+            "input.yaml",
+            "--scoring",
+            "scoring.yaml",
+            "--out-dir",
+            "out",
+            "--repeats",
+            "2",
+            "--temperature-schedule",
+            "0,0.7",
+        ],
+    )
 
-    with runner.isolated_filesystem():
-        Path("out").mkdir()
-        Path("target.yaml").write_text(
-            "name: t\nadapter: openai_compatible\nmodel: m\nbase_url: https://example.test/v1\napi_key_env: OPENAI_API_KEY\n",
-            encoding="utf-8",
-        )
-        Path("input.yaml").write_text(
-            "name: d\nversion: 1\ncategory: c\nsubcategory: s\ncases:\n  - id: c1\n    severity: low\n    objective: x\n    prompt: hi\n",
-            encoding="utf-8",
-        )
-        Path("scoring.yaml").write_text(
-            "version: 1\nmax_score: 100\nseverity_weights:\n  low: 10\n  medium: 20\n  high: 35\n  critical: 50\n",
-            encoding="utf-8",
-        )
-        result = runner.invoke(
-            app,
-            [
-                "run",
-                "--target",
-                "target.yaml",
-                "--input",
-                "input.yaml",
-                "--scoring",
-                "scoring.yaml",
-                "--out-dir",
-                "out",
-                "--repeats",
-                "2",
-                "--temperature-schedule",
-                "0,0.7",
-            ],
-        )
-
-        assert result.exit_code == 0
-        assert "Run complete: run-test" in result.output
-        assert Path("out/report.json").exists()
-        assert Path("out/report.md").exists()
-        assert captured["repeats"] == 2
-        assert captured["temperature_schedule"] == [0.0, 0.7]
+    assert result.exit_code == 0
+    assert "Run complete: run-test" in result.output
+    assert Path("out/report.json").exists()
+    assert Path("out/report.md").exists()
+    assert captured["repeats"] == 2
+    assert captured["temperature_schedule"] == [0.0, 0.7]
 
 
 def test_run_command_resolves_managed_target_name(monkeypatch, tmp_path: Path) -> None:
