@@ -138,8 +138,38 @@ def test_studio_api_exposes_run_history_and_safe_artifacts(tmp_path) -> None:
     assert "Malleus Studio export" in export_html.text
     assert "studio-example-run" in export_html.text
 
+    timeline = client.get("/api/runs/studio-example-run/timeline")
+    assert timeline.status_code == 200
+    assert timeline.json()["recording"]["events"][0]["event_type"] == "queued"
+
     escape = client.get("/api/runs/studio-example-run/artifact", params={"path": "../secret.txt"})
     assert escape.status_code == 404
+
+
+def test_studio_api_stores_organization_recordings(tmp_path) -> None:
+    app = create_studio_app(
+        runs_root=tmp_path / "runs",
+        session_target_dir=tmp_path / "session-targets",
+        provider_keys_path=tmp_path / "provider-keys.json",
+        organization_store_path=tmp_path / "organization.db",
+    )
+    client = TestClient(app)
+    recording = {
+        "recording_id": "recording-1",
+        "source": "ci",
+        "events": [],
+        "violations": [],
+    }
+
+    added = client.post(
+        "/api/organizations/acme/projects/assistant/recordings", json=recording
+    )
+    runs = client.get("/api/organizations/acme/runs", params={"project": "assistant"})
+    trend = client.get("/api/organizations/acme/trend", params={"project": "assistant"})
+
+    assert added.status_code == 200
+    assert runs.json()["runs"][0]["recording_id"] == "recording-1"
+    assert trend.json()["trend"]["direction"] == "new"
 
 
 def test_studio_api_builds_scan_plan(tmp_path) -> None:

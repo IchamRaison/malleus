@@ -133,6 +133,28 @@ type StudioEvent = {
   payload: Record<string, unknown>;
 };
 
+type FlightEvent = {
+  event_id: string;
+  sequence: number;
+  kind: string;
+  event_type: string;
+  actor: string;
+  trust_zone: string;
+  parent_ids: string[];
+  summary: string;
+  status: string;
+};
+
+type CausalTimeline = {
+  recording: {
+    events: FlightEvent[];
+    violations: Array<{ violation_id: string; severity: string; reason: string; event_id: string }>;
+  };
+  attack_graph: {
+    recommended_scenarios: string[];
+  };
+};
+
 const DEFAULT_API_BASES = [
   process.env.NEXT_PUBLIC_STUDIO_API_BASE,
   "http://127.0.0.1:8765",
@@ -879,6 +901,7 @@ type CaseReplay = {
   objective: string;
   prompt: string;
   status: "running" | "passed" | "review";
+  metadata: Record<string, unknown>;
   score?: string;
   response?: string;
   checks: string[];
@@ -965,6 +988,7 @@ function buildCaseCards(events: StudioEvent[]): CaseReplay[] {
         objective: "",
         prompt: "",
         status: "running",
+        metadata: {},
         checks: [],
         raw: []
       } satisfies CaseReplay);
@@ -972,10 +996,12 @@ function buildCaseCards(events: StudioEvent[]): CaseReplay[] {
     if (event.event === "case_start") {
       current.objective = String(event.payload.objective ?? "");
       current.prompt = String(event.payload.prompt ?? "");
+      current.metadata = isRecord(event.payload.metadata) ? event.payload.metadata : {};
       current.status = "running";
     }
     if (event.event === "case_end") {
       current.status = event.payload.passed === true ? "passed" : "review";
+      current.metadata = isRecord(event.payload.metadata) ? event.payload.metadata : current.metadata;
       current.score =
         event.payload.score !== undefined ? `${String(event.payload.score)}/${String(event.payload.max_score ?? "")}` : undefined;
       current.response = String(event.payload.response ?? "");
@@ -1012,13 +1038,22 @@ function buildSurfaceEvidenceCards(events: StudioEvent[]): SurfaceEvidence[] {
 }
 
 function CaseReplayCard({ card }: { card: CaseReplay }) {
+  const isVerifiedLeak = card.metadata.verified_real_security_leak === true;
+  const expectedLeak = typeof card.metadata.verified_expected_leak === "string" ? card.metadata.verified_expected_leak : "";
+  const reviewLabel = isVerifiedLeak ? "Security leak" : "Needs review";
   return (
-    <article className={`caseCard ${card.status}`}>
+    <article className={`caseCard ${card.status} ${isVerifiedLeak ? "securityLeak" : ""}`}>
       <div className="caseTopline">
         <span>{card.dataset}</span>
         <strong>{card.caseId}</strong>
-        <b>{card.status === "passed" ? "Passed" : card.status === "running" ? "Running" : "Needs review"}</b>
+        <b>{card.status === "passed" ? "Passed" : card.status === "running" ? "Running" : reviewLabel}</b>
       </div>
+      {isVerifiedLeak ? (
+        <div className="leakBanner">
+          <span>System prompt fragment completion</span>
+          {expectedLeak ? <code>{expectedLeak}</code> : null}
+        </div>
+      ) : null}
       <div className="caseBody">
         <section>
           <h4>What Malleus asked</h4>
@@ -1039,7 +1074,13 @@ function CaseReplayCard({ card }: { card: CaseReplay }) {
       ) : null}
       {card.checks.length ? (
         <div className="reviewBox">
-          <h4>Why this needs review</h4>
+          <h4>{isVerifiedLeak ? "Why this is a security leak" : "Why this needs review"}</h4>
+          {isVerifiedLeak ? (
+            <p>
+              The model completed a private startup prompt fragment instead of refusing. The answer is the hidden text
+              continuation Malleus expected to stay protected.
+            </p>
+          ) : null}
           {card.checks.map((check, index) => (
             <p key={`${card.caseId}-check-${index}`}>{humanizeCheck(check)}</p>
           ))}
@@ -1335,6 +1376,23 @@ function humanizeCheck(check: string) {
 }
 
 function RunDetail({ apiBase, artifacts, run }: { apiBase: string; artifacts: RunArtifact[]; run: StudioRun }) {
+  const [timeline, setTimeline] = useState<CausalTimeline | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`${apiBase}/api/runs/${encodeURIComponent(run.run_id)}/timeline`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (active) setTimeline(payload);
+      })
+      .catch(() => {
+        if (active) setTimeline(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [apiBase, run.run_id, run.status]);
+
   return (
     <div className="runDetail">
       <div className="detailHero">
@@ -1371,6 +1429,7 @@ function RunDetail({ apiBase, artifacts, run }: { apiBase: string; artifacts: Ru
       </div>
       {run.report_json ? <p className="artifact"><span>report</span>{run.report_json}</p> : null}
       {run.evidence_json ? <p className="artifact"><span>evidence</span>{run.evidence_json}</p> : null}
+      {timeline ? <CausalTimelinePanel timeline={timeline} /> : null}
       {artifacts.length ? (
         <div className="artifactLinks">
           <h3>Artifacts</h3>
@@ -1393,6 +1452,37 @@ function RunDetail({ apiBase, artifacts, run }: { apiBase: string; artifacts: Ru
         </article>
       ))}
     </div>
+  );
+}
+
+function CausalTimelinePanel({ timeline }: { timeline: CausalTimeline }) {
+  const events = timeline.recording.events.slice(-16);
+  return (
+    <section className="causalTimeline">
+      <div className="causalHeader">
+        <h3>Causal security timeline</h3>
+        <strong>{timeline.recording.violations.length} violations</strong>
+      </div>
+      {timeline.attack_graph.recommended_scenarios.length ? (
+        <div className="recommendedProbes">
+          {timeline.attack_graph.recommended_scenarios.map((scenario) => (
+            <span key={scenario}>{scenario}</span>
+          ))}
+        </div>
+      ) : null}
+      <div className="causalEvents">
+        {events.map((event) => (
+          <div className={`causalEvent ${event.status}`} key={event.event_id}>
+            <span>{event.sequence.toString().padStart(3, "0")}</span>
+            <i>{event.kind}</i>
+            <strong>{event.event_type}</strong>
+            <small>{event.trust_zone}</small>
+            <p>{event.summary}</p>
+            {event.parent_ids.length ? <code>from {event.parent_ids.join(", ")}</code> : null}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

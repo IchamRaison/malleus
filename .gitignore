@@ -19,3 +19,4 @@ opencode-feature-inventory/
 .DS_Store
 node_modules/
 .next/
+*.tsbuildinfo

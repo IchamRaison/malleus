@@ -41,6 +41,11 @@ from malleus.live_surfaces.mutations import (
     sanitize_mutation_report,
 )
 from malleus.live_surfaces.progress import LiveProgressCallback, emit_progress as _emit_progress, emit_system_harness_progress
+from malleus.live_surfaces.pipeline import (
+    MissingSystemHarnessReport,
+    SystemHarnessSpec,
+    execute_system_harness,
+)
 from malleus.live_surfaces.reporting import (
     aggregate_matrix_payload,
     final_preflight_status_label,
@@ -1147,13 +1152,13 @@ def _challenge_live_artifact_refs(output_dir: Path) -> list[ArtifactRef]:
 
 SYSTEM_HARNESS_PACK_IDS = {"rag-v1", "agentic-injection-v1", "plugin-workflow-v1", "code-agent-v1", "memory-agent-v1", "multi-agent-v1", "ui-browser-v1"}
 SYSTEM_HARNESS_REQUIREMENTS = {
-    "rag-v1": ("rag_service", "rag-service", run_rag_service_harness, RagServiceReport, "rag-service-report.json"),
-    "agentic-injection-v1": ("tool_agent", "tool-agent", run_tool_agent_harness, ToolAgentReport, "tool-agent-report.json"),
-    "plugin-workflow-v1": ("workflow_harness", "workflow-harness", run_workflow_harness, WorkflowHarnessReport, "workflow-harness-report.json"),
-    "code-agent-v1": ("code_agent", "code-agent", run_code_agent_harness, CodeAgentHarnessReport, "code-agent-harness-report.json"),
-    "memory-agent-v1": ("memory_agent", "memory-agent", run_memory_agent_harness, MemoryAgentReport, "memory-agent-report.json"),
-    "multi-agent-v1": ("multi_agent", "multi-agent", run_multi_agent_harness, MultiAgentReport, "multi-agent-report.json"),
-    "ui-browser-v1": ("browser_agent", "browser-agent", run_browser_agent_harness, BrowserAgentReport, "browser-agent-report.json"),
+    "rag-v1": SystemHarnessSpec("rag_service", "rag-service", run_rag_service_harness, RagServiceReport, "rag-service-report.json", supports_limit=True),
+    "agentic-injection-v1": SystemHarnessSpec("tool_agent", "tool-agent", run_tool_agent_harness, ToolAgentReport, "tool-agent-report.json", supports_limit=True),
+    "plugin-workflow-v1": SystemHarnessSpec("workflow_harness", "workflow-harness", run_workflow_harness, WorkflowHarnessReport, "workflow-harness-report.json"),
+    "code-agent-v1": SystemHarnessSpec("code_agent", "code-agent", run_code_agent_harness, CodeAgentHarnessReport, "code-agent-harness-report.json", sandbox_backend="bwrap"),
+    "memory-agent-v1": SystemHarnessSpec("memory_agent", "memory-agent", run_memory_agent_harness, MemoryAgentReport, "memory-agent-report.json", supports_limit=True),
+    "multi-agent-v1": SystemHarnessSpec("multi_agent", "multi-agent", run_multi_agent_harness, MultiAgentReport, "multi-agent-report.json"),
+    "ui-browser-v1": SystemHarnessSpec("browser_agent", "browser-agent", run_browser_agent_harness, BrowserAgentReport, "browser-agent-report.json", supports_limit=True),
 }
 
 
@@ -1175,8 +1180,10 @@ def _run_self_modification_pack_row(
     if actual_type not in SELF_MODIFICATION_TARGET_TYPES:
         base_target = load_target_config(target_path)
         if preflight.text_ready and can_auto_wrap(base_target, "tool_agent"):
-            output_name, runner, report_type, report_name, fixture_path = _self_modification_runner_config(pack, "tool_agent", matrix_path=matrix_path, out_dir=out_dir)
-            pack_out = Path(out_dir) / output_name / pack.id
+            spec, fixture_path = _self_modification_runner_config(
+                pack, "tool_agent", matrix_path=matrix_path, out_dir=out_dir
+            )
+            pack_out = Path(out_dir) / spec.output_name / pack.id
             with auto_system_wrapper(base_target, "tool_agent", fixture_path, pack_out) as wrapped_target:
                 wrapped_metadata = LiveTargetMetadata(
                     name=target.name,
@@ -1196,11 +1203,7 @@ def _run_self_modification_pack_row(
                 )
                 return _run_system_harness_with_config(
                     pack,
-                    required_type="tool_agent",
-                    output_name=output_name,
-                    runner=runner,
-                    report_type=report_type,
-                    report_name=report_name,
+                    spec=spec,
                     fixture_path=fixture_path,
                     run_id=run_id,
                     timestamp=timestamp,
@@ -1232,14 +1235,12 @@ def _run_self_modification_pack_row(
             metadata={"preflight_text_status": preflight.text_status, "self_modification_routing": "capability_gap"},
         )
 
-    output_name, runner, report_type, report_name, fixture_path = _self_modification_runner_config(pack, actual_type, matrix_path=matrix_path, out_dir=out_dir)
+    spec, fixture_path = _self_modification_runner_config(
+        pack, actual_type, matrix_path=matrix_path, out_dir=out_dir
+    )
     return _run_system_harness_with_config(
         pack,
-        required_type=actual_type,
-        output_name=output_name,
-        runner=runner,
-        report_type=report_type,
-        report_name=report_name,
+        spec=spec,
         fixture_path=fixture_path,
         run_id=run_id,
         timestamp=timestamp,
@@ -1254,19 +1255,25 @@ def _run_self_modification_pack_row(
     )
 
 
-def _self_modification_runner_config(pack: ReleaseMatrixPackRef, actual_type: str, *, matrix_path: str | Path, out_dir: str | Path) -> tuple[str, Any, Any, str, Path]:
+def _self_modification_runner_config(
+    pack: ReleaseMatrixPackRef,
+    actual_type: str,
+    *,
+    matrix_path: str | Path,
+    out_dir: str | Path,
+) -> tuple[SystemHarnessSpec, Path]:
     pack_out = Path(out_dir) / f"self-modification-{actual_type.replace('_', '-')}" / pack.id
     pack_out.mkdir(parents=True, exist_ok=True)
     if actual_type == "tool_agent":
-        return "self-modification-tool-agent", run_tool_agent_harness, ToolAgentReport, "tool-agent-report.json", write_self_modification_tool_agent_fixture(pack_out)
+        return SystemHarnessSpec("tool_agent", "self-modification-tool-agent", run_tool_agent_harness, ToolAgentReport, "tool-agent-report.json", supports_limit=True), write_self_modification_tool_agent_fixture(pack_out)
     if actual_type == "workflow_harness":
-        return "self-modification-workflow", run_workflow_harness, WorkflowHarnessReport, "workflow-harness-report.json", write_self_modification_workflow_fixture(pack_out)
+        return SystemHarnessSpec("workflow_harness", "self-modification-workflow", run_workflow_harness, WorkflowHarnessReport, "workflow-harness-report.json"), write_self_modification_workflow_fixture(pack_out)
     if actual_type == "code_agent":
-        return "self-modification-code-agent", run_code_agent_harness, CodeAgentHarnessReport, "code-agent-harness-report.json", _matrix_reference_path(pack.path, Path(matrix_path).resolve())
+        return SystemHarnessSpec("code_agent", "self-modification-code-agent", run_code_agent_harness, CodeAgentHarnessReport, "code-agent-harness-report.json", sandbox_backend="bwrap"), _matrix_reference_path(pack.path, Path(matrix_path).resolve())
     if actual_type == "memory_agent":
-        return "self-modification-memory-agent", run_memory_agent_harness, MemoryAgentReport, "memory-agent-report.json", write_self_modification_memory_fixture(pack_out)
+        return SystemHarnessSpec("memory_agent", "self-modification-memory-agent", run_memory_agent_harness, MemoryAgentReport, "memory-agent-report.json", supports_limit=True), write_self_modification_memory_fixture(pack_out)
     if actual_type == "multi_agent":
-        return "self-modification-multi-agent", run_multi_agent_harness, MultiAgentReport, "multi-agent-report.json", write_self_modification_multi_agent_fixture(pack_out)
+        return SystemHarnessSpec("multi_agent", "self-modification-multi-agent", run_multi_agent_harness, MultiAgentReport, "multi-agent-report.json"), write_self_modification_multi_agent_fixture(pack_out)
     raise ValueError(f"unsupported self-modification target type: {actual_type}")
 
 
@@ -1290,13 +1297,14 @@ def _run_system_harness_pack_row(
     progress_callback: LiveProgressCallback | None = None,
     surface_limit: int | None = None,
 ) -> LiveEvidenceRow:
-    required_type, output_name, runner, report_type, report_name = SYSTEM_HARNESS_REQUIREMENTS[pack.id]
+    spec = SYSTEM_HARNESS_REQUIREMENTS[pack.id]
+    required_type = spec.target_type
     actual_type = _row_target_type(target)
     if actual_type != required_type:
         base_target = load_target_config(target_path)
         fixture_path = _matrix_reference_path(pack.path, Path(matrix_path).resolve())
         if preflight.text_ready and can_auto_wrap(base_target, required_type):
-            pack_out = Path(out_dir) / output_name / pack.id
+            pack_out = Path(out_dir) / spec.output_name / pack.id
             with auto_system_wrapper(base_target, required_type, fixture_path, pack_out) as wrapped_target:
                 wrapped_metadata = LiveTargetMetadata(
                     name=target.name,
@@ -1316,11 +1324,7 @@ def _run_system_harness_pack_row(
                 )
                 return _run_system_harness_with_config(
                     pack,
-                    required_type=required_type,
-                    output_name=output_name,
-                    runner=runner,
-                    report_type=report_type,
-                    report_name=report_name,
+                    spec=spec,
                     fixture_path=fixture_path,
                     run_id=run_id,
                     timestamp=timestamp,
@@ -1343,11 +1347,7 @@ def _run_system_harness_pack_row(
     fixture_path = _matrix_reference_path(pack.path, Path(matrix_path).resolve())
     return _run_system_harness_with_config(
         pack,
-        required_type=required_type,
-        output_name=output_name,
-        runner=runner,
-        report_type=report_type,
-        report_name=report_name,
+        spec=spec,
         fixture_path=fixture_path,
         run_id=run_id,
         timestamp=timestamp,
@@ -1365,11 +1365,7 @@ def _run_system_harness_pack_row(
 def _run_system_harness_with_config(
     pack: ReleaseMatrixPackRef,
     *,
-    required_type: str,
-    output_name: str,
-    runner: Any,
-    report_type: Any,
-    report_name: str,
+    spec: SystemHarnessSpec,
     fixture_path: Path,
     run_id: str,
     timestamp: str,
@@ -1382,27 +1378,25 @@ def _run_system_harness_with_config(
     surface_limit: int | None,
     metadata: dict[str, Any],
 ) -> LiveEvidenceRow:
-    pack_out = Path(out_dir) / output_name / pack.id
+    pack_out = Path(out_dir) / spec.output_name / pack.id
     public_pack_path = _public_path(pack.path)
     system_command = f"{command} # system harness {pack.id} --surface {shlex.quote(public_pack_path)}"
-    runner_kwargs: dict[str, Any] = {}
-    if surface_limit is not None and required_type in {"rag_service", "tool_agent", "browser_agent", "memory_agent"}:
-        runner_kwargs["limit"] = surface_limit
     try:
-        if required_type == "code_agent":
-            runner(target_path, fixture_path, pack_out, sandbox_backend="bwrap")
-        else:
-            runner(target_path, fixture_path, pack_out, **runner_kwargs)
+        report = execute_system_harness(
+            spec,
+            target_path=target_path,
+            fixture_path=fixture_path,
+            output_dir=pack_out,
+            limit=surface_limit,
+        )
+    except MissingSystemHarnessReport:
+        return _system_error_row(pack, run_id=run_id, timestamp=timestamp, command=system_command, target=target, status="infra_error", reason=f"{pack.id} system harness did not produce {spec.report_name}", metadata={"output_dir": f"{spec.output_name}/{pack.id}", "report_json_exists": False, "preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
     except (ValueError, OSError) as exc:
-        return _system_error_row(pack, run_id=run_id, timestamp=timestamp, command=system_command, target=target, status="target_config_error", reason=f"{pack.id} system harness configuration failed: {type(exc).__name__}: {exc}", metadata={"output_dir": f"{output_name}/{pack.id}", "runner_error_type": type(exc).__name__, "preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
+        return _system_error_row(pack, run_id=run_id, timestamp=timestamp, command=system_command, target=target, status="target_config_error", reason=f"{pack.id} system harness configuration failed: {type(exc).__name__}: {exc}", metadata={"output_dir": f"{spec.output_name}/{pack.id}", "runner_error_type": type(exc).__name__, "preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
     except Exception as exc:
-        return _system_error_row(pack, run_id=run_id, timestamp=timestamp, command=system_command, target=target, status="target_error", reason=f"{pack.id} system harness execution failed: {type(exc).__name__}: {exc}", metadata={"output_dir": f"{output_name}/{pack.id}", "runner_error_type": type(exc).__name__, "preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
-    report_path = pack_out / report_name
-    if not report_path.exists():
-        return _system_error_row(pack, run_id=run_id, timestamp=timestamp, command=system_command, target=target, status="infra_error", reason=f"{pack.id} system harness did not produce {report_name}", metadata={"output_dir": f"{output_name}/{pack.id}", "report_json_exists": False, "preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
-    report = report_type.model_validate(json.loads(report_path.read_text(encoding="utf-8")))
+        return _system_error_row(pack, run_id=run_id, timestamp=timestamp, command=system_command, target=target, status="target_error", reason=f"{pack.id} system harness execution failed: {type(exc).__name__}: {exc}", metadata={"output_dir": f"{spec.output_name}/{pack.id}", "runner_error_type": type(exc).__name__, "preflight_text_status": preflight.text_status, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
     emit_system_harness_progress(progress_callback, pack=pack, report=report)
-    return _system_report_row(pack, report=report, run_id=run_id, timestamp=timestamp, command=system_command, target=target, output_dir=pack_out, output_prefix=f"{output_name}/{pack.id}", report_name=report_name, metadata={"preflight_text_status": preflight.text_status, "surface_limit": surface_limit, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
+    return _system_report_row(pack, report=report, run_id=run_id, timestamp=timestamp, command=system_command, target=target, output_dir=pack_out, output_prefix=f"{spec.output_name}/{pack.id}", report_name=spec.report_name, metadata={"preflight_text_status": preflight.text_status, "surface_limit": surface_limit, **metadata, **_classic_pack_metadata(pack, public_pack_path=public_pack_path)})
 
 
 def _system_report_row(pack: ReleaseMatrixPackRef, *, report: Any, run_id: str, timestamp: str, command: str, target: LiveTargetMetadata, output_dir: Path, output_prefix: str, report_name: str, metadata: dict[str, Any]) -> LiveEvidenceRow:

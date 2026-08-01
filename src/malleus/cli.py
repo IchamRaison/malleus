@@ -31,6 +31,36 @@ from malleus.benchmark_suite import run_benchmark_suite
 from malleus.benchmark_workflow import summarize_benchmark_reports, write_benchmark_plan
 from malleus.challenge_runner import run_challenge
 from malleus.cli_branding import render_splash
+from malleus.cli_apps import (
+    agent_app,
+    app,
+    audit_app,
+    benchmark_app,
+    campaign_app,
+    challenge_app,
+    code_agent_app,
+    coverage_app,
+    findings_app,
+    issues_app,
+    mutations_app,
+    patch_app,
+    rag_app,
+    register_subapps,
+    regression_app,
+    safety_tune_app,
+    scenario_app,
+    self_mod_app,
+    studio_app,
+    target_app,
+    taxonomy_app,
+    threat_model_app,
+    ui_harness_app,
+    visual_lab_app,
+    workspace_app,
+)
+from malleus.cli_errors import format_cli_error as _format_cli_error
+import malleus.cli_bundle  # noqa: F401 - command registration
+import malleus.cli_flight  # noqa: F401 - command registration
 from malleus.cli_onboarding import register_onboarding_commands
 from malleus.code_agent import inspect_code_agent_trace
 from malleus.compound_risk import build_compound_risk_report, write_compound_risk_report
@@ -41,6 +71,7 @@ from malleus.diff_runs import diff_run_reports, write_diff_report
 from malleus.evidence_bundle import build_evidence_bundle, write_evidence_bundle
 from malleus.campaign_runner import run_campaign
 from malleus.findings import find_finding, load_or_collect_findings, write_finding_artifacts
+from malleus.flight_recorder import sign_evidence_directory
 from malleus.gates import evaluate_report_file
 from malleus.hidden_channels import inspect_text, write_hidden_channel_report
 from malleus.interop import export_findings, import_external_results, supported_export_formats, supported_import_sources
@@ -79,11 +110,7 @@ from malleus.target_bundle import (
     SURFACE_PACK_IDS,
     doctor_target_bundle,
     is_target_bundle_file,
-    load_target_bundle,
-    make_reference_bundle,
-    managed_bundle_path,
     resolve_bundle,
-    write_target_bundle,
 )
 from malleus.taxonomy_garden import write_taxonomy_diff, write_taxonomy_snapshot
 from malleus.threat_model import SUPPORTED_PROFILES, init_threat_model, load_threat_model, threat_model_coverage_status, threat_model_status, write_threat_model
@@ -97,33 +124,6 @@ from malleus.v1_readiness import build_v1_readiness_report, render_v1_readiness,
 from malleus.visual_lab import generate_visual_lab_fixtures, inspect_visual_lab, run_vision_fixture
 from malleus.workspace import init_workspace, inspect_workspace, render_workspace_next, render_workspace_status
 from malleus.utils.redact import redact_public_text
-
-app = typer.Typer(help="Malleus defensive LLM evaluation harness")
-mutations_app = typer.Typer(help="Inspect available prompt mutation transforms")
-findings_app = typer.Typer(help="List, show, and export reportable security findings")
-issues_app = typer.Typer(help="Export local remediation issues from Malleus findings")
-patch_app = typer.Typer(help="Generate defensive patch suggestion artifacts")
-campaign_app = typer.Typer(help="Run deterministic multi-step defensive campaigns")
-challenge_app = typer.Typer(help="Run local deterministic artifact challenges")
-rag_app = typer.Typer(help="Run local fixture RAG security harness checks")
-coverage_app = typer.Typer(help="Build attack-surface coverage artifacts")
-threat_model_app = typer.Typer(help="Initialize and inspect offline threat models")
-workspace_app = typer.Typer(help="Manage local artifact-backed workspaces")
-benchmark_app = typer.Typer(help="Run live benchmarks")
-visual_lab_app = typer.Typer(help="Generate provider-free visual and artifact fixtures")
-safety_tune_app = typer.Typer(help="Explore provider-free safety risk surfaces across decoding parameters")
-code_agent_app = typer.Typer(help="Inspect local code-agent VCS and lifecycle traces")
-scenario_app = typer.Typer(help="Generate defensive draft scenario artifacts")
-regression_app = typer.Typer(help="Generate and validate provider-free regression packs")
-self_mod_app = typer.Typer(help="Inspect proposed self-modification diffs and traces")
-studio_app = typer.Typer(help="Run the local Studio lab or export a static sanitized studio narrative")
-taxonomy_app = typer.Typer(help="Write taxonomy garden snapshots and diffs")
-ui_harness_app = typer.Typer(help="Plan provider-free local/staging UI harness scaffolds")
-target_app = typer.Typer(help="Manage reusable target model configurations")
-bundle_app = typer.Typer(help="Manage target bundles for full trace-backed agent runs")
-agent_app = typer.Typer(help="Serve and inspect real external-agent adapters")
-audit_app = typer.Typer(help="Audit generated reports for suspected false positives and weak evidence")
-
 
 def _parse_temperature_schedule(value: str | None) -> list[float] | None:
     if value is None or not value.strip():
@@ -171,30 +171,7 @@ def _package_version() -> str:
     except PackageNotFoundError:
         return "unknown"
 
-app.add_typer(mutations_app, name="mutations", hidden=True)
-app.add_typer(findings_app, name="findings")
-app.add_typer(issues_app, name="issues", hidden=True)
-app.add_typer(patch_app, name="patch", hidden=True)
-app.add_typer(campaign_app, name="campaign", hidden=True)
-app.add_typer(challenge_app, name="challenge", hidden=True)
-app.add_typer(rag_app, name="rag", hidden=True)
-app.add_typer(coverage_app, name="coverage", hidden=True)
-app.add_typer(threat_model_app, name="threat-model", hidden=True)
-app.add_typer(workspace_app, name="workspace", hidden=True)
-app.add_typer(benchmark_app, name="benchmark")
-app.add_typer(visual_lab_app, name="visual-lab", hidden=True)
-app.add_typer(safety_tune_app, name="safety-tune", hidden=True)
-app.add_typer(code_agent_app, name="code-agent", hidden=True)
-app.add_typer(scenario_app, name="scenario", hidden=True)
-app.add_typer(regression_app, name="regression", hidden=True)
-app.add_typer(self_mod_app, name="self-mod", hidden=True)
-app.add_typer(studio_app, name="studio", hidden=True)
-app.add_typer(taxonomy_app, name="taxonomy", hidden=True)
-app.add_typer(ui_harness_app, name="ui-harness", hidden=True)
-app.add_typer(target_app, name="target")
-app.add_typer(bundle_app, name="bundle")
-app.add_typer(agent_app, name="agent")
-app.add_typer(audit_app, name="audit")
+register_subapps()
 
 CORE_MUTATION_INPUT_PATH = resource_path("datasets/benchmark_packs/core-v1.yaml")
 DEFAULT_RUN_INPUT_PATH = resource_path("datasets/benchmark_packs/smoke-v1.yaml")
@@ -591,26 +568,6 @@ def _resolve_cli_target(reference: str | Path, config_dir: Path | None) -> Path:
     return target_path
 
 
-def _format_cli_error(exc: ValueError) -> str:
-    errors = getattr(exc, "errors", None)
-    if callable(errors):
-        try:
-            entries = errors(include_input=False)
-        except TypeError:
-            entries = errors()
-        messages: list[str] = []
-        if isinstance(entries, list):
-            for entry in entries:
-                if not isinstance(entry, dict):
-                    continue
-                location = ".".join(str(part) for part in entry.get("loc", ()) if part != "__root__")
-                message = str(entry.get("msg", "invalid value"))
-                messages.append(f"{location}: {message}" if location else message)
-        if messages:
-            return "; ".join(messages)
-    return str(exc)
-
-
 def _render_target_doctor_markdown(report: dict[str, object]) -> str:
     universe = report.get("model_universe") if isinstance(report.get("model_universe"), dict) else {}
     lines = [
@@ -998,84 +955,6 @@ def _progress_excerpt(text: str, *, limit: int) -> str:
     if len(redacted) > limit:
         redacted = redacted[: limit - 1].rstrip() + "…"
     return textwrap.shorten(redacted, width=limit, placeholder="…")
-
-
-@bundle_app.command("init")
-def bundle_init_command(
-    model_target: str = typer.Option(..., "--model-target", help="Managed target name or YAML path for the backing chat/vision model"),
-    name: str | None = typer.Option(None, "--name", help="Bundle name; defaults to <model-target>-reference"),
-    out: Path | None = typer.Option(None, "--out", dir_okay=False, help="Write bundle YAML here; defaults to the managed bundle directory"),
-    overwrite: bool = typer.Option(False, "--overwrite", help="Replace an existing bundle file"),
-) -> None:
-    """Create a portable target bundle skeleton for full trace-backed runs."""
-    bundle_name = name or f"{Path(str(model_target)).stem}-reference"
-    bundle = make_reference_bundle(bundle_name, model_target)
-    destination = out if out is not None else managed_bundle_path(bundle.name)
-    try:
-        path = write_target_bundle(bundle, destination, overwrite=overwrite)
-    except TargetStoreError as exc:
-        typer.echo(str(exc), err=True)
-        raise typer.Exit(code=1) from exc
-    typer.echo(f"Target bundle written: {path}")
-    typer.echo(f"Model target: {bundle.model_target}")
-    typer.echo("Surfaces:")
-    for surface, config in bundle.surfaces.items():
-        typer.echo(f"  - {surface}: {config.target} ({config.required_target_type})")
-    typer.echo(f"Next: malleus bundle doctor {path}")
-
-
-@bundle_app.command("doctor")
-def bundle_doctor_command(
-    reference: str = typer.Argument(..., help="Managed bundle name or bundle YAML path"),
-    config_dir: Path | None = typer.Option(None, "--config-dir", file_okay=False, help="Managed target directory", hidden=True),
-    bundle_dir: Path | None = typer.Option(None, "--bundle-dir", file_okay=False, help="Managed bundle directory", hidden=True),
-    json_output: bool = typer.Option(False, "--json", help="Emit machine-readable bundle doctor result"),
-) -> None:
-    """Validate that a target bundle can exercise every declared surface."""
-    try:
-        bundle_path = resolve_bundle(reference, bundle_dir)
-        report = doctor_target_bundle(bundle_path, target_dir=config_dir)
-    except (TargetStoreError, ValueError, ValidationError, OSError) as exc:
-        typer.echo(f"bundle_doctor: failed - {_format_cli_error(exc) if isinstance(exc, (ValueError, ValidationError)) else exc}", err=True)
-        raise typer.Exit(code=1) from exc
-    if json_output:
-        typer.echo(json.dumps(report.to_dict(), indent=2))
-    else:
-        typer.echo(f"bundle_doctor: {'ok' if report.ok else 'failed'}")
-        typer.echo(f"bundle: {report.bundle.name}")
-        typer.echo(f"model: {report.model_status} - {report.bundle.model_target} ({report.model_target_type or 'unresolved'})")
-        typer.echo("surfaces:")
-        for check in report.surface_checks:
-            symbol = "✓" if check.status == "passed" else "✗"
-            typer.echo(
-                f"  {symbol} {check.surface}: {check.status} - {check.target_reference} "
-                f"(required={check.required_target_type}, actual={check.target_type or 'unresolved'})"
-            )
-            if check.status != "passed":
-                typer.echo(f"      {check.message}")
-    if not report.ok:
-        raise typer.Exit(code=1)
-
-
-@bundle_app.command("show")
-def bundle_show_command(
-    reference: str = typer.Argument(..., help="Managed bundle name or bundle YAML path"),
-    bundle_dir: Path | None = typer.Option(None, "--bundle-dir", file_okay=False, help="Managed bundle directory", hidden=True),
-) -> None:
-    try:
-        bundle_path = resolve_bundle(reference, bundle_dir)
-        bundle = load_target_bundle(bundle_path)
-    except (TargetStoreError, ValueError, ValidationError, OSError) as exc:
-        typer.echo(f"bundle_show: failed - {_format_cli_error(exc) if isinstance(exc, (ValueError, ValidationError)) else exc}", err=True)
-        raise typer.Exit(code=1) from exc
-    typer.echo(f"bundle: {bundle.name}")
-    typer.echo(f"schema_version: {bundle.schema_version}")
-    typer.echo(f"mode: {bundle.mode}")
-    typer.echo(f"model_target: {bundle.model_target}")
-    typer.echo("surfaces:")
-    for surface, config in bundle.surfaces.items():
-        typer.echo(f"  - {surface}: {config.target} ({config.required_target_type})")
-
 
 
 @target_app.command("init")
@@ -3929,6 +3808,9 @@ def evidence_bundle_command(
     issue_report: list[Path] | None = typer.Option(None, "--issue-report", exists=True, dir_okay=False, readable=True, help="issue-export.json; repeatable", hidden=True),
     remediation_board: list[Path] | None = typer.Option(None, "--remediation-board", exists=True, dir_okay=False, readable=True, help="remediation-board.md; repeatable", hidden=True),
     audit_mode: bool = typer.Option(False, "--audit-mode", help="Write auditor-mode summary, risk, remediation, and artifact hash files"),
+    sign: bool = typer.Option(False, "--sign", help="Write a signed-manifest.json for the completed bundle"),
+    signing_key_id: str = typer.Option("malleus-ci", "--signing-key-id", help="Identifier for the signing key", hidden=True),
+    signing_key_env: str = typer.Option("MALLEUS_SIGNING_KEY", "--signing-key-env", help="Environment variable containing the signing key", hidden=True),
 ) -> None:
     artifact_paths = [
         *list(run_report or []),
@@ -3980,6 +3862,13 @@ def evidence_bundle_command(
     else:
         output = write_evidence_bundle(bundle, out_dir)
     typer.echo(f"Evidence bundle written: {output}")
+    if sign:
+        signing_key = os.environ.get(signing_key_env)
+        if not signing_key:
+            typer.echo(f"missing signing key environment variable: {signing_key_env}", err=True)
+            raise typer.Exit(code=1)
+        manifest = sign_evidence_directory(out_dir, key=signing_key, key_id=signing_key_id)
+        typer.echo(f"Signed manifest: {out_dir / 'signed-manifest.json'} ({len(manifest.entries)} artifacts)")
     if audit_mode:
         typer.echo(f"Audit summary: {out_dir / 'audit-summary.md'}")
         typer.echo(f"Risk register: {out_dir / 'risk-register.json'}")

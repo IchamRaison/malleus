@@ -15,6 +15,7 @@ from malleus.studio_runtime import (
     StudioScanPlanRequest,
     apply_studio_provider_keys,
     build_studio_scan_plan,
+    build_studio_causal_timeline,
     delete_studio_provider_key,
     discover_provider_models,
     list_studio_provider_key_statuses,
@@ -26,6 +27,8 @@ from malleus.studio_runtime import (
     resolve_studio_run_artifact,
     save_studio_provider_key,
 )
+from malleus.flight_recorder import FlightRecording
+from malleus.organization import OrganizationEvidenceStore
 
 
 def _studio_cors_origins() -> list[str]:
@@ -41,6 +44,7 @@ def create_studio_app(
     target_dir: str | Path | None = None,
     session_target_dir: str | Path = ".malleus/studio/targets",
     provider_keys_path: str | Path = ".malleus/studio/provider-keys.json",
+    organization_store_path: str | Path = ".malleus/organization.db",
 ) -> Any:
     try:
         from fastapi import FastAPI, HTTPException
@@ -51,6 +55,7 @@ def create_studio_app(
 
     apply_studio_provider_keys(provider_keys_path)
     manager = StudioRunManager(root=runs_root, target_dir=target_dir, session_target_dir=session_target_dir)
+    organization_store = OrganizationEvidenceStore(organization_store_path)
     app = FastAPI(title="Malleus Studio API", version="0.1.0")
     app.add_middleware(
         CORSMiddleware,
@@ -147,6 +152,27 @@ def create_studio_app(
         bounded_limit = max(1, min(limit, 200))
         return {"runs": [item.model_dump(mode="json") for item in manager.list_history()[:bounded_limit]]}
 
+    @app.post("/api/organizations/{organization}/projects/{project}/recordings")
+    def add_organization_recording(
+        organization: str, project: str, recording: FlightRecording
+    ) -> dict[str, object]:
+        run = organization_store.add_recording(organization, project, recording)
+        return {"run": run.model_dump(mode="json")}
+
+    @app.get("/api/organizations/{organization}/runs")
+    def organization_runs(
+        organization: str, project: str | None = None, limit: int = 100
+    ) -> dict[str, object]:
+        runs = organization_store.list_runs(organization, project=project, limit=limit)
+        return {"runs": [run.model_dump(mode="json") for run in runs]}
+
+    @app.get("/api/organizations/{organization}/trend")
+    def organization_trend(
+        organization: str, project: str | None = None
+    ) -> dict[str, object]:
+        trend = organization_store.trend(organization, project=project)
+        return {"trend": trend.model_dump(mode="json")}
+
     @app.get("/api/runs/{run_id}")
     def run_detail(run_id: str) -> dict[str, object]:
         try:
@@ -162,6 +188,18 @@ def create_studio_app(
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="run not found") from exc
         return {"events": [event.model_dump(mode="json") for event in events]}
+
+    @app.get("/api/runs/{run_id}/timeline")
+    def run_timeline(run_id: str) -> dict[str, object]:
+        try:
+            manager.get_run(run_id)
+            return build_studio_causal_timeline(runs_root, run_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="run not found") from exc
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="run artifacts not found") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.get("/api/runs/{run_id}/artifact")
     def run_artifact(run_id: str, path: str) -> FileResponse:

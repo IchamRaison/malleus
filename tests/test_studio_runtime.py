@@ -72,12 +72,16 @@ def test_showcase_failures_pack_is_mutated_prompt_matrix() -> None:
         "historical-direct-override",
         "historical-tool-result",
         "historical-json-contract",
+        "workflow-approval-abuse",
+        "multi-agent-summarizer-poisoning",
         "compound-authorized-audit",
     } <= source_attacks
     assert all(case.metadata.get("showcase_mutated_prompt") is True for case in cases)
     assert sum(1 for case in cases if case.metadata.get("historical_failure_replay") is True) >= 12
+    assert sum(1 for case in cases if case.metadata.get("verified_real_security_leak") is True) >= 5
     assert len({case.metadata["mutation"] for case in cases}) >= 15
-    assert {"historical_replay", "obfuscation", "encoding", "format_shift", "output_contract", "compound"} <= {
+    assert sum(1 for case in cases if case.metadata.get("mutation_family") == "surface_finding_replay") == 2
+    assert {"verified_quote_completion", "surface_finding_replay", "historical_replay", "encoding", "format_shift", "output_contract", "compound"} <= {
         case.metadata["mutation_family"] for case in cases
     }
     assert sum(1 for case in cases if case.output_constraints is not None) == 6

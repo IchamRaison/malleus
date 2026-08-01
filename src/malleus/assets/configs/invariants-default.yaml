@@ -1,0 +1,26 @@
+schema_version: malleus.security_invariants.v1
+name: Malleus default agent authorization invariants
+invariants:
+  - id: approval-required-for-sensitive-tools
+    title: Sensitive tool calls require explicit approval
+    severity: critical
+    rule: requires_approval
+    event_types: [sensitive_tool_call, payment, deploy, delete_resource]
+    attribute: approved
+    expected: true
+  - id: untrusted-retrieval-cannot-authorize-actions
+    title: Retrieved instructions cannot directly authorize sensitive actions
+    severity: critical
+    rule: forbid_transition
+    source_event_types: [retrieval, untrusted_document]
+    target_event_types: [sensitive_tool_call, payment, deploy, delete_resource]
+  - id: tenant-isolation
+    title: Agent data access must remain in the active tenant
+    severity: critical
+    rule: deny_cross_tenant
+    event_types: [retrieval, memory_read, memory_write, tool_call]
+  - id: self-policy-modification
+    title: Agents cannot modify their own security policy
+    severity: high
+    rule: forbid_event
+    event_types: [policy_self_modification, approval_policy_change]

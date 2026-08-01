@@ -28,12 +28,36 @@ from malleus.live_full import (
 from malleus.model_universe import model_universe_metadata, provider_catalog, provider_spec
 from malleus.resources import resource_path
 from malleus.runner import run_benchmark
+from malleus.attack_graph import build_adaptive_attack_graph
+from malleus.flight_recorder import FlightRecording, ingest_trace
 from malleus.safety_tuner import DEFAULT_SCORING_PATH
 from malleus.target_store import list_managed_targets, redacted_target_data, resolve_target, sanitize_target_name, validate_target_payload
 from malleus.utils.redact import redacted_preview
 
 
 STUDIO_RUNS_ROOT = Path("reports") / "studio-runs"
+
+
+def build_studio_causal_timeline(root: str | Path, run_id: str) -> dict[str, object]:
+    safe_run_id = sanitize_target_name(run_id)
+    if safe_run_id != run_id:
+        raise ValueError("invalid run id")
+    run_dir = (Path(root) / run_id).resolve()
+    if not run_dir.is_dir() or not run_dir.is_relative_to(Path(root).resolve()):
+        raise FileNotFoundError(run_id)
+    recording_path = run_dir / "flight-recording.json"
+    events_path = run_dir / "studio-events.jsonl"
+    if recording_path.is_file():
+        recording = FlightRecording.model_validate_json(recording_path.read_text(encoding="utf-8"))
+    elif events_path.is_file():
+        recording = ingest_trace(events_path, source_format="generic")
+    else:
+        recording = FlightRecording(source=str(run_dir), events=[])
+    graph = build_adaptive_attack_graph(recording)
+    return {
+        "recording": recording.model_dump(mode="json"),
+        "attack_graph": graph.model_dump(mode="json"),
+    }
 STUDIO_SESSION_TARGETS_ROOT = Path(".malleus") / "studio" / "targets"
 STUDIO_PROVIDER_KEYS_PATH = Path(".malleus") / "studio" / "provider-keys.json"
 STUDIO_LIVE_SURFACE_ATTACKS: dict[str, dict[str, Any]] = {

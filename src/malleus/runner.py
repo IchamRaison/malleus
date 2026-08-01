@@ -606,7 +606,8 @@ def run_benchmark(
             for case in selected_cases:
                 case_ref = _case_ref(dataset, case, "case")
                 events.emit("case_started", run_id, case=case_ref.model_dump())
-                _emit_progress(progress_callback, event="case_start", dataset=dataset.name, case_id=case.id, kind="case", severity=case.severity, objective=case.objective, prompt=case.prompt)
+                case_metadata = case.metadata or {}
+                _emit_progress(progress_callback, event="case_start", dataset=dataset.name, case_id=case.id, kind="case", severity=case.severity, objective=case.objective, prompt=case.prompt, metadata=case_metadata)
                 samples: list[CaseResult] = []
                 for sample_index in range(1, repeats + 1):
                     events.emit("sample_started", run_id, case=case_ref.model_dump(), sample_index=sample_index)
@@ -628,7 +629,7 @@ def run_benchmark(
                 if repeats > 1:
                     repeated_case_summaries.append(summarize_case_samples(dataset.name, case.id, samples))
                 events.emit("case_finished", run_id, case=case_ref.model_dump(), passed=result.passed, score=result.score)
-                _emit_progress(progress_callback, event="case_end", dataset=dataset.name, case_id=case.id, kind="case", passed=result.passed, score=result.score, max_score=scoring.max_score, latency_seconds=result.latency_seconds, response=result.response_text, failure_checks=[item.detail for item in [*result.failure_checks, *result.pass_checks] if not item.passed], pass_checks=[item.detail for item in result.pass_checks if item.passed])
+                _emit_progress(progress_callback, event="case_end", dataset=dataset.name, case_id=case.id, kind="case", passed=result.passed, score=result.score, max_score=scoring.max_score, latency_seconds=result.latency_seconds, response=result.response_text, failure_checks=[item.detail for item in [*result.failure_checks, *result.pass_checks] if not item.passed], pass_checks=[item.detail for item in result.pass_checks if item.passed], metadata=case_metadata)
             for group in selected_groups:
                 group_ref = _case_ref(dataset, group, "group")
                 events.emit("case_started", run_id, case=group_ref.model_dump())

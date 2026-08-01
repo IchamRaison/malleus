@@ -8,19 +8,30 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
+          cache: pip
       - name: Install package
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[dev]'
       - name: Run tests
-        run: pytest -q
+        run: pytest -q --cov --cov-report=term-missing
       - name: Run static sanity checks
-        run: ruff check src tests scripts
+        run: |
+          ruff check src tests scripts
+          pyright
+          python scripts/sync_packaged_datasets.py
+      - name: Audit Python dependencies
+        if: matrix.python-version == '3.11'
+        run: pip-audit
       - name: Build and verify installable package assets
         run: |
           python -m build
@@ -170,3 +181,26 @@ jobs:
           assert "Malleus Benchmark Dashboard" in artifacts["dashboard"].read_text()
           assert "Security evaluation evidence bundle" in artifacts["evidence"].read_text()
           PY
+
+  studio:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/studio/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high

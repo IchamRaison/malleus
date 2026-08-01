@@ -25,6 +25,18 @@ It runs benchmark scenarios against a model or an agent target, records what hap
 
 Malleus is for authorized testing of systems you own or are allowed to assess. It is not a general safety certificate and not a prompt archive.
 
+Malleus Flight Recorder turns real agent traces into causal authorization
+evidence, deterministic invariant violations, replayable regressions, signed
+evidence, and release gates. See [the Flight Recorder guide](docs/flight-recorder.md)
+and [public Agent Security Benchmark methodology](docs/public-agent-security-benchmark.md).
+
+Dataset sources live in `datasets/`. The copies under `src/malleus/assets/datasets/`
+are package artifacts. After changing a dataset, synchronize them with:
+
+```bash
+python scripts/sync_packaged_datasets.py --write
+```
+
 ## What You Can Test
 
 Malleus supports plain model targets and traced system targets:
