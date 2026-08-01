@@ -31,7 +31,9 @@ jobs:
           python scripts/sync_packaged_datasets.py
       - name: Audit Python dependencies
         if: matrix.python-version == '3.11'
-        run: pip-audit
+        run: |
+          pip install --upgrade setuptools
+          pip-audit
       - name: Build and verify installable package assets
         run: |
           python -m build
