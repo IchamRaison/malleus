@@ -28,6 +28,8 @@ dev = [
   "pyright>=1.1.390",
   "ruff>=0.8.0",
   "wheel>=0.43.0",
+  "fastapi>=0.115.0",
+  "uvicorn>=0.30.0",
 ]
 browser = [
   "playwright>=1.45.0",
